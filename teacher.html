@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Guru · Physics Sandbox</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#1E1F1C">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..600&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script>
+  window.MathJax = { tex: { inlineMath: [["$", "$"], ["\\(", "\\)"]] }, svg: { fontCache: "global" } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" id="MathJax-script" async></script>
+</head>
+<body class="teacher-shell">
+<header class="site-header">
+  <div class="header-inner">
+    <a href="index.html" class="brand" style="text-decoration:none">
+      <img class="brand-mark" src="assets/logo-mark.svg" alt="" width="38" height="38">
+      <span class="brand-text">
+        <span class="brand-title">Physics Sandbox</span>
+        <span class="brand-sub" data-i18n="teacher.brandsub">Panel Guru</span>
+      </span>
+    </a>
+    <div class="header-actions">
+      <div class="lang-switch" role="group" data-i18n-title="header.lang.title" title="Ganti bahasa">
+        <button type="button" class="lang-switch-btn" data-lang="id">ID</button>
+        <button type="button" class="lang-switch-btn" data-lang="en">EN</button>
+      </div>
+      <button type="button" id="teacher-logout-btn" class="settings-btn" hidden data-i18n="teacher.logout">Keluar</button>
+    </div>
+  </div>
+</header>
+
+<main class="teacher-main">
+  <section class="teacher-login" id="teacher-login-card">
+    <p class="eyebrow" data-i18n="teacher.login.eyebrow">Panel Guru</p>
+    <h2 data-i18n="teacher.login.title">Masuk Panel Guru</h2>
+    <p class="muted small" data-i18n-html="teacher.login.desc2">Masukkan Kode Kontrol Guru, yaitu nilai <code>TEACHER_CONTROL_CODE</code> yang kamu atur di Environment Variables Vercel.</p>
+    <label><span data-i18n="teacher.controlcode.label">Kode Kontrol Guru</span>
+      <input type="password" id="teacher-control-input" data-i18n-placeholder="teacher.controlcode.placeholder" placeholder="Kode kontrol guru" autocomplete="current-password">
+    </label>
+    <button type="button" id="teacher-login-btn" class="btn btn-primary" data-i18n="teacher.login.btn">Masuk</button>
+    <p class="onboarding-status" id="teacher-login-status"></p>
+  </section>
+
+  <div id="teacher-panel" hidden>
+    <nav class="t-tabs" role="tablist">
+      <button type="button" class="t-tab active" data-pane="session"><span class="tab-num">01</span><span data-i18n="teacher.tab.session">Sesi Kelas</span></button>
+      <button type="button" class="t-tab" data-pane="records"><span class="tab-num">02</span><span data-i18n="teacher.tab.records">Rekap &amp; Jawaban Siswa</span></button>
+      <button type="button" class="t-tab" data-pane="quiz"><span class="tab-num">03</span><span data-i18n="teacher.tab.quiz">Kuis Topik</span></button>
+      <button type="button" class="t-tab" data-pane="usage"><span class="tab-num">04</span><span data-i18n="teacher.tab.usage">Pemakaian AI</span></button>
+    </nav>
+
+    <!-- 01 Sesi kelas -->
+    <section class="t-pane active" id="pane-session">
+      <div class="t-grid">
+        <div>
+          <div class="t-card">
+            <h3 data-i18n="teacher.session.title2">Sesi kelas</h3>
+            <p class="t-card-desc" data-i18n="teacher.session.desc2">Pilih topik yang dikerjakan bersama. Siswa masuk dengan kode 6 huruf; tab di dalam topik tetap mengikuti progres masing-masing.</p>
+            <div id="teacher-no-session">
+              <div class="t-row">
+                <label><span data-i18n="teacher.topic.label">Topik</span><select id="teacher-topic-select"></select></label>
+                <label><span data-i18n="teacher.tab.label">Tab</span>
+                  <select id="teacher-tab-select">
+                    <option value="0" data-i18n="tab.materi">Materi</option>
+                    <option value="1" data-i18n="tab.eksperimen">Eksperimen</option>
+                    <option value="2" data-i18n="tab.latihan">Latihan Soal</option>
+                    <option value="3" data-i18n="tab.lab">Makerspace</option>
+                  </select>
+                </label>
+              </div>
+              <div class="lab-actions"><button type="button" id="teacher-start-btn" class="btn btn-primary" data-i18n="teacher.startsession.btn">Mulai Sesi Baru</button></div>
+            </div>
+            <div id="teacher-has-session" hidden>
+              <p class="muted small" style="margin:0" data-i18n="teacher.sharecode.desc">Kode untuk dibagikan ke siswa (tulis di papan tulis / sebutkan):</p>
+              <div class="session-code-display" id="teacher-code-display">------</div>
+              <div class="t-row">
+                <label><span data-i18n="teacher.activetopic.label">Topik aktif sekarang</span><select id="teacher-topic-select-2"></select></label>
+                <label><span data-i18n="teacher.activetab.label">Tab aktif sekarang</span>
+                  <select id="teacher-tab-select-2">
+                    <option value="0" data-i18n="tab.materi">Materi</option>
+                    <option value="1" data-i18n="tab.eksperimen">Eksperimen</option>
+                    <option value="2" data-i18n="tab.latihan">Latihan Soal</option>
+                    <option value="3" data-i18n="tab.lab">Makerspace</option>
+                  </select>
+                </label>
+              </div>
+              <div class="lab-actions">
+                <button type="button" id="teacher-update-btn" class="btn btn-primary" data-i18n="teacher.applychanges.btn">Terapkan Perubahan</button>
+                <button type="button" id="teacher-end-btn" class="btn btn-secondary" data-i18n="teacher.endsession.btn">Akhiri Sesi</button>
+              </div>
+            </div>
+            <p class="teacher-note" id="teacher-session-status"></p>
+          </div>
+        </div>
+        <div>
+          <div class="t-card">
+            <h3 data-i18n="teacher.gate.title2">Menunggu konfirmasi</h3>
+            <p class="t-card-desc" data-i18n="teacher.gate.desc2">Siswa yang lulus pertanyaan konfirmasi Eksperimen atau mengirim refleksi Makerspace. Setujui untuk membuka tahap berikutnya.</p>
+            <div class="t-table-wrap">
+              <table class="t-table">
+                <thead><tr><th data-i18n="teacher.gate.th.student">Siswa</th><th data-i18n="teacher.gate.th.stage">Tahap</th><th data-i18n="teacher.gate.th.summary">Ringkasan/Refleksi Siswa</th><th data-i18n="teacher.gate.th.submitted">Dikirim</th><th data-i18n="teacher.gate.th.action">Aksi</th></tr></thead>
+                <tbody id="gate-pending-body"></tbody>
+              </table>
+            </div>
+            <p class="teacher-note" id="gate-decide-status"></p>
+          </div>
+          <div class="t-card">
+            <h3 data-i18n="teacher.roster.title2">Siswa yang sedang online</h3>
+            <p class="t-card-desc" data-i18n="teacher.roster.desc2">Diperbarui setiap 8 detik. Menampilkan siswa yang aktif dalam 5 menit terakhir, di dalam maupun di luar sesi.</p>
+            <div class="t-table-wrap">
+              <table class="t-table">
+                <thead><tr><th data-i18n="teacher.th.student">Siswa</th><th data-i18n="teacher.th.activity">Aktivitas sekarang</th><th data-i18n="teacher.th.mode">Mode</th><th data-i18n="teacher.th.lastreport">Terakhir lapor</th></tr></thead>
+                <tbody id="roster-body"></tbody>
+              </table>
+            </div>
+            <p class="teacher-note" id="roster-count"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 Rekap & jawaban -->
+    <section class="t-pane" id="pane-records">
+      <div class="t-stats" id="records-stats"></div>
+      <div class="t-toolbar">
+        <input type="text" id="records-search" data-i18n-placeholder="teacher.records.search" placeholder="Cari nama...">
+        <select id="records-class-filter"></select>
+        <button type="button" class="btn btn-secondary btn-small" id="records-refresh-btn" data-i18n="teacher.records.refresh">Muat ulang</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn btn-primary btn-small" id="export-xlsx-btn" data-i18n="teacher.export.xlsx">Ekspor Excel (.xlsx)</button>
+        <button type="button" class="btn btn-secondary btn-small" id="export-pdf-btn" data-i18n="teacher.export.pdf">Ekspor PDF</button>
+      </div>
+      <p class="teacher-note" id="records-status"></p>
+      <div class="t-table-wrap">
+        <table class="t-table" id="records-table">
+          <thead><tr>
+            <th data-i18n="teacher.rec.student">Siswa</th>
+            <th data-i18n="teacher.rec.class">Kelas</th>
+            <th data-i18n="teacher.rec.stage">Tahap</th>
+            <th data-i18n="teacher.rec.slides">Slide</th>
+            <th data-i18n="teacher.rec.materi">Konfirmasi Materi</th>
+            <th data-i18n="teacher.rec.lkpd">LKPD</th>
+            <th data-i18n="teacher.rec.latihan">Latihan</th>
+            <th data-i18n="teacher.rec.quiz">Kuis</th>
+            <th data-i18n="teacher.rec.sim">Simulasi AI</th>
+            <th data-i18n="teacher.rec.gates">Checkpoint guru</th>
+            <th data-i18n="teacher.rec.last">Terakhir aktif</th>
+          </tr></thead>
+          <tbody id="records-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 03 Kuis -->
+    <section class="t-pane" id="pane-quiz">
+      <div class="t-grid">
+        <div>
+          <div class="t-card">
+            <h3 data-i18n="quiz.section.title2">Bank soal</h3>
+            <p class="t-card-desc" data-i18n="quiz.section.desc2">Tulis soal manual atau buat otomatis dengan AI (Claude Haiku 5.5), simpan ke bank, lalu publikasikan ke sesi kelas yang sedang aktif.</p>
+            <label><span data-i18n="quiz.topic.label">Topik Kuis</span><select id="quiz-topic-select"></select></label>
+            <div class="t-row">
+              <label><span data-i18n="quiz.generate.count.label">Jumlah soal (maks 10)</span><input type="number" id="quiz-gen-count" min="1" max="10" value="5"></label>
+              <label><span data-i18n="quiz.generate.type.label">Tipe soal</span>
+                <select id="quiz-gen-type">
+                  <option value="mcq" data-i18n="quiz.type.mcq">Pilihan Ganda (MCQ)</option>
+                  <option value="short" data-i18n="quiz.type.short">Jawaban Singkat</option>
+                  <option value="essay" data-i18n="quiz.type.essay">Esai / Uraian</option>
+                  <option value="mixed" data-i18n="quiz.type.mixed">Campuran</option>
+                </select>
+              </label>
+            </div>
+            <div class="lab-actions">
+              <button type="button" id="quiz-generate-btn" class="btn btn-accent btn-small" data-i18n="quiz.generate.btn2">Generate dengan AI</button>
+              <button type="button" id="quiz-addmanual-btn" class="btn btn-secondary btn-small" data-i18n="quiz.addmanual.btn">+ Tambah Soal Manual</button>
+            </div>
+            <p class="teacher-note" id="quiz-generate-status"></p>
+          </div>
+          <div class="t-card">
+            <h3 data-i18n="quiz.active.title">Kuis yang berjalan</h3>
+            <div id="quiz-active-card" class="quiz-active-card" hidden></div>
+            <div class="lab-actions">
+              <button type="button" id="quiz-end-btn" class="btn btn-secondary btn-small" hidden data-i18n="quiz.end.btn">Akhiri Kuis</button>
+              <button type="button" id="quiz-viewresults-btn" class="btn btn-primary btn-small" data-i18n="quiz.viewresults.btn">Lihat Jawaban Siswa</button>
+            </div>
+            <h4 style="margin-top:20px" data-i18n="quiz.history.title">Riwayat kuis</h4>
+            <div class="t-table-wrap"><table class="t-table"><thead><tr><th data-i18n="quiz.history.time">Waktu</th><th data-i18n="teacher.topic.label">Topik</th><th data-i18n="quiz.history.count">Soal</th><th data-i18n="quiz.history.answers">Jawaban</th><th></th></tr></thead><tbody id="quiz-history-body"></tbody></table></div>
+          </div>
+        </div>
+        <div class="t-card">
+          <div class="t-toolbar" style="margin-bottom:6px">
+            <h3 style="margin:0" data-i18n="quiz.list.title">Daftar soal</h3>
+            <span class="spacer"></span>
+            <button type="button" id="quiz-save-btn" class="btn btn-secondary btn-small" data-i18n="quiz.save.btn">Simpan Bank Soal</button>
+            <button type="button" id="quiz-publish-btn" class="btn btn-primary btn-small" data-i18n="quiz.publish.btn2">Publikasikan yang dicentang</button>
+          </div>
+          <p class="teacher-note" id="quiz-save-status"></p>
+          <div id="quiz-editor-container"></div>
+          <p class="teacher-note" id="quiz-bank-loading-note" data-i18n="quiz.bank.loading" hidden>Memuat bank soal...</p>
+          <div id="quiz-question-list" class="quiz-question-list"></div>
+          <p class="muted small" id="quiz-bank-empty-note" data-i18n="quiz.bank.empty" hidden>Belum ada soal untuk topik ini.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 Pemakaian AI -->
+    <section class="t-pane" id="pane-usage">
+      <div class="t-card">
+        <h3 data-i18n="teacher.usage.title">Pemakaian AI hari ini</h3>
+        <p class="t-card-desc" data-i18n="teacher.usage.desc">Jumlah permintaan AI dari seluruh siswa hari ini (reset tengah malam WIB). Batas bisa diubah lewat Environment Variables Vercel (lihat docs/SETUP.md).</p>
+        <div id="usage-body"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div id="quiz-results-modal" class="modal" hidden>
+  <div class="modal-box wide">
+    <div class="modal-head">
+      <h3 data-i18n="quiz.results.title">Jawaban Siswa</h3>
+      <button type="button" id="quiz-results-close-x" class="icon-btn" data-i18n-aria="chatbot.close.aria" aria-label="Tutup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div id="quiz-results-body"></div>
+    <div class="modal-actions"><button type="button" id="quiz-results-close-btn" class="btn btn-secondary" data-i18n="quiz.results.close.btn">Tutup</button></div>
+  </div>
+</div>
+
+<div id="student-modal" class="modal" hidden>
+  <div class="modal-box wide">
+    <div class="modal-head">
+      <div><p class="eyebrow" id="student-modal-eyebrow"></p><h3 id="student-modal-title"></h3></div>
+      <button type="button" id="student-modal-close-x" class="icon-btn" data-i18n-aria="chatbot.close.aria" aria-label="Tutup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div id="student-modal-body"></div>
+    <div class="modal-actions">
+      <button type="button" id="student-delete-btn" class="btn btn-ghost btn-small" data-i18n="teacher.student.delete">Hapus data siswa ini</button>
+      <span style="flex:1"></span>
+      <button type="button" id="student-pdf-btn" class="btn btn-secondary btn-small" data-i18n="teacher.student.pdf">Unduh PDF siswa ini</button>
+      <button type="button" id="student-xlsx-btn" class="btn btn-secondary btn-small" data-i18n="teacher.student.xlsx">Unduh Excel siswa ini</button>
+      <button type="button" id="student-modal-close-btn" class="btn btn-primary btn-small" data-i18n="quiz.results.close.btn">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/i18n-v9.js"></script>
+<script src="js/api.js"></script>
+<script src="js/demo-simulations.js"></script>
+<script src="js/content.js"></script>
+<script src="js/lkpd-content.js"></script>
+<script src="vendor/xlsx.full.min.js" defer></script>
+<script src="vendor/jspdf.umd.min.js" defer></script>
+<script src="vendor/jspdf.plugin.autotable.min.js" defer></script>
+<script src="js/teacher-export.js" defer></script>
+<script src="js/teacher.js" defer></script>
+</body>
+</html>
