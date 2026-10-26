@@ -60,12 +60,13 @@ async function step(name, fn) {
     await browser.close(); srv.kill(); process.exit(1);
   }
 }
-async function enterStudent(pg, name, cls, code) {
+async function enterStudent(pg, name, cls, code, mode) {
   await pg.goto(BASE + "/");
   await pg.click("#gate-role-student-btn");
   await pg.fill("#gate-student-name-input", name);
   await pg.fill("#gate-student-class-input", cls);
   await pg.click("#gate-student-info-btn");
+  await pg.click("#gate-mode-" + (mode || "self") + "-btn");
   await pg.fill("#gate-student-code-input", code);
   await pg.click("#gate-student-code-btn");
 }
@@ -81,7 +82,15 @@ await step("no API-key UI anywhere; brand & logo present", async () => {
   await pg.screenshot({ path: path.join(SHOTS, "01-gate.png") });
 });
 await step("wrong code rejected, self-study code accepted", async () => {
-  await enterStudent(pg, "Rina Putri", "XII IPA 1", "salah-kode");
+  assert.equal(await pg.getAttribute("#gate-role-teacher-link", "href"), "teacher.html");
+  // Mode "Belajar di kelas" menolak kode belajar mandiri, lalu ganti ke mode mandiri
+  await enterStudent(pg, "Rina Putri", "XII IPA 1", "mandiri-uji", "class");
+  await pg.waitForFunction(() => /bukan kode sesi kelas/i.test(document.getElementById("gate-student-code-status").textContent));
+  await pg.click("#gate-student-code-back-btn");
+  await pg.click("#gate-mode-self-btn");
+  assert.match(await pg.textContent("#gate-code-title"), /mandiri/i);
+  await pg.fill("#gate-student-code-input", "salah-kode");
+  await pg.click("#gate-student-code-btn");
   await pg.waitForFunction(() => /tidak valid/i.test(document.getElementById("gate-student-code-status").textContent));
   await pg.fill("#gate-student-code-input", "mandiri-uji");
   await pg.click("#gate-student-code-btn");
@@ -291,10 +300,22 @@ await step("English UI and phone layout", async () => {
   await mp.goto(BASE + "/");
   await Promise.all([mp.waitForEvent("load"), mp.click('.lang-switch-btn[data-lang="en"]')]);
   await mp.waitForSelector("#gate-step-role");
-  assert.match(await mp.textContent("#gate-step-role h2"), /How are you studying today/);
+  assert.match(await mp.textContent("#gate-step-role h2"), /Who is signing in/);
   const overflow = await mp.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   assert.ok(!overflow, "no horizontal scroll on phone gate");
   await mp.screenshot({ path: path.join(SHOTS, "12-phone-gate.png"), fullPage: true });
+});
+await step("Validator: explore code via gate link", async () => {
+  const vp = await newPage();
+  await vp.goto(BASE + "/");
+  await vp.click("#gate-role-guest-btn");
+  await vp.fill("#gate-guest-code-input", "kode-salah");
+  await vp.click("#gate-guest-code-btn");
+  await vp.waitForFunction(() => document.getElementById("gate-guest-code-status").textContent.length > 3);
+  await vp.fill("#gate-guest-code-input", "  jelajah-uji ");
+  await vp.click("#gate-guest-code-btn");
+  await vp.waitForSelector("#site-shell:not([hidden])");
+  await vp.close();
 });
 await step("no uncaught page errors", async () => {
   assert.deepEqual(pageErrors, []);

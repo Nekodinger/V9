@@ -2513,13 +2513,15 @@ document.getElementById("settings-reset-onboarding-btn").addEventListener("click
    Semua kode diverifikasi server; hasilnya token akses 30 hari.
    Langkah "API key" dari V7 sudah dihapus.
    ============================================================ */
-const GATE_STEPS = ["role", "student-info", "student-code", "guest-code"];
+const GATE_STEPS = ["role", "student-info", "student-mode", "student-code", "guest-code"];
+// Pilihan siswa di langkah 3: "class" (kode sesi 6 huruf) atau "self" (kode belajar mandiri).
+let gateStudentMode = null;
 
 function computeGateStep() {
   const role = getUserRole();
   if (role === "student") {
     if (!getStudentName() || !getStudentClass()) return "student-info";
-    if (!getAccessToken()) return "student-code";
+    if (!getAccessToken()) return gateStudentMode ? "student-code" : "student-mode";
     return null;
   }
   if (role === "guest") {
@@ -2537,6 +2539,7 @@ function showGateStep(step) {
     document.getElementById("gate-student-name-input").value = getStudentName();
     document.getElementById("gate-student-class-input").value = getStudentClass();
   }
+  if (step === "student-code") applyStudentCodeMode();
   const focusEl = document.querySelector("#gate-step-" + step + " input");
   // Fokus otomatis hanya bila pengguna belum mengetik di kolom lain (jangan mencuri fokus).
   if (focusEl) setTimeout(() => { const a = document.activeElement; if (!a || !/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) focusEl.focus(); }, 30);
@@ -2575,6 +2578,21 @@ document.getElementById("gate-role-student-btn").addEventListener("click", () =>
   localStorage.setItem(STORAGE_KEY_ROLE, "student");
   applyGate();
 });
+// Teks langkah 4 mengikuti pilihan "Belajar di kelas" / "Belajar mandiri".
+function applyStudentCodeMode() {
+  const m = gateStudentMode === "self" ? "self" : "class";
+  const title = document.getElementById("gate-code-title"), desc = document.getElementById("gate-code-desc"), input = document.getElementById("gate-student-code-input");
+  title.setAttribute("data-i18n", "gate.code." + m + ".title"); title.textContent = t("gate.code." + m + ".title");
+  desc.setAttribute("data-i18n", "gate.code." + m + ".desc"); desc.textContent = t("gate.code." + m + ".desc");
+  input.setAttribute("data-i18n-placeholder", "gate.code." + m + ".placeholder"); input.placeholder = t("gate.code." + m + ".placeholder");
+  input.maxLength = m === "class" ? 12 : 60;
+  document.getElementById("gate-student-code-status").textContent = "";
+}
+["class", "self"].forEach(m => document.getElementById("gate-mode-" + m + "-btn").addEventListener("click", () => {
+  gateStudentMode = m;
+  applyGate();
+}));
+document.getElementById("gate-student-mode-back-btn").addEventListener("click", () => showGateStep("student-info"));
 document.getElementById("gate-role-guest-btn").addEventListener("click", () => {
   localStorage.setItem(STORAGE_KEY_ROLE, "guest");
   applyGate();
@@ -2613,6 +2631,9 @@ document.getElementById("gate-student-code-btn").addEventListener("click", async
   catch (e) { data = { error: e.message }; }
   btn.disabled = false;
   if (data.error) { status.textContent = data.error; return; }
+  // Kode harus cocok dengan pilihan di langkah 3 (supaya siswa tidak salah mode).
+  const wanted = gateStudentMode === "self" ? "self" : "class";
+  if (data.kind !== wanted) { status.textContent = t(wanted === "class" ? "gate.code.notclass" : "gate.code.notself"); return; }
   setAccess(data.kind, data.token);
   mergeServerProgress(data.progress);
   if (data.kind === "class") { localStorage.setItem(STORAGE_KEY_CLASS_CODE, data.session.code); classSession = data.session; }
@@ -2626,7 +2647,8 @@ document.getElementById("gate-student-code-input").addEventListener("keydown", (
   if (e.key === "Enter") document.getElementById("gate-student-code-btn").click();
 });
 document.getElementById("gate-student-code-back-btn").addEventListener("click", () => {
-  showGateStep("student-info");
+  gateStudentMode = null;
+  showGateStep("student-mode");
 });
 
 document.getElementById("gate-guest-code-btn").addEventListener("click", async () => {

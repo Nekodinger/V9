@@ -46,26 +46,26 @@
     </div>
 
     <div id="gate-step-role" class="gate-step">
-      <p class="step-count" data-i18n="gate.step.1of3">Langkah 1 dari 3</p>
-      <h2 data-i18n="gate.role.title">Bagaimana kamu belajar hari ini?</h2>
-      <p class="muted" data-i18n="gate.role.desc">Pilih salah satu. Kamu bisa mengubahnya nanti di Pengaturan.</p>
+      <p class="step-count" data-i18n="gate.step.1of4">Langkah 1 dari 4</p>
+      <h2 data-i18n="gate.role.title2">Masuk sebagai siapa?</h2>
+      <p class="muted" data-i18n="gate.role.desc2">Siswa masuk ke ruang belajar. Guru langsung menuju Panel Guru.</p>
       <div class="gate-role-options">
         <button type="button" id="gate-role-student-btn" class="gate-role-btn">
           <span class="role-num">01</span>
           <strong data-i18n="gate.role.student.title">Saya siswa</strong>
-          <span class="muted" data-i18n="gate.role.student.desc2">Isi nama dan kelas, lalu masukkan kode sesi kelas dari guru atau kode belajar mandiri.</span>
+          <span class="muted" data-i18n="gate.role.student.desc3">Isi nama dan kelas, lalu pilih belajar di kelas atau belajar mandiri.</span>
         </button>
-        <button type="button" id="gate-role-guest-btn" class="gate-role-btn">
+        <a href="teacher.html" id="gate-role-teacher-link" class="gate-role-btn">
           <span class="role-num">02</span>
-          <strong data-i18n="gate.role.guest.title2">Guru / validator</strong>
-          <span class="muted" data-i18n="gate.role.guest.desc2">Jelajahi semua tab tanpa urutan dengan Kode Eksplorasi.</span>
-        </button>
+          <strong data-i18n="gate.role.teacher.title">Saya guru</strong>
+          <span class="muted" data-i18n="gate.role.teacher.desc">Buka Panel Guru untuk memulai sesi kelas, melihat progres, dan mengekspor rekap.</span>
+        </a>
       </div>
-      <p class="gate-teacher-link"><span data-i18n="gate.teacherlink.text">Ingin mengelola kelas?</span> <a href="teacher.html" data-i18n="gate.teacherlink.btn">Buka Panel Guru</a></p>
+      <p class="gate-teacher-link"><span data-i18n="gate.validator.text">Validator atau penguji?</span> <button type="button" id="gate-role-guest-btn" class="link-btn" data-i18n="gate.validator.btn">Masuk dengan Kode Eksplorasi</button></p>
     </div>
 
     <div id="gate-step-student-info" class="gate-step" hidden>
-      <p class="step-count" data-i18n="gate.step.2of3">Langkah 2 dari 3</p>
+      <p class="step-count" data-i18n="gate.step.2of4">Langkah 2 dari 4</p>
       <h2 data-i18n="gate.step3s.title2">Data diri singkat</h2>
       <p class="muted" data-i18n="gate.step3s.desc">Supaya gurumu bisa mengenali progresmu di Panel Guru.</p>
       <label><span data-i18n="field.fullname">Nama lengkap</span>
@@ -79,20 +79,35 @@
       <p class="gate-back-row"><button type="button" id="gate-student-info-back-btn" class="link-btn" data-i18n="action.back">Kembali</button></p>
     </div>
 
+    <div id="gate-step-student-mode" class="gate-step" hidden>
+      <p class="step-count" data-i18n="gate.step.3of4">Langkah 3 dari 4</p>
+      <h2 data-i18n="gate.mode.title">Kamu belajar di mana?</h2>
+      <p class="muted" data-i18n="gate.mode.desc">Pilih sesuai keadaanmu sekarang. Nanti bisa diganti di Pengaturan.</p>
+      <div class="gate-role-options">
+        <button type="button" id="gate-mode-class-btn" class="gate-role-btn">
+          <span class="role-num">A</span>
+          <strong data-i18n="gate.mode.class.title">Belajar di kelas</strong>
+          <span class="muted" data-i18n="gate.mode.class.desc">Gurumu sedang menjalankan sesi kelas. Masukkan kode 6 huruf dari layar guru; aktivitas dan kuis mengikuti guru.</span>
+        </button>
+        <button type="button" id="gate-mode-self-btn" class="gate-role-btn">
+          <span class="role-num">B</span>
+          <strong data-i18n="gate.mode.self.title">Belajar mandiri</strong>
+          <span class="muted" data-i18n="gate.mode.self.desc">Belajar sendiri di rumah dengan kode belajar mandiri dari gurumu. Checkpoint tetap dikonfirmasi guru.</span>
+        </button>
+      </div>
+      <p class="gate-back-row"><button type="button" id="gate-student-mode-back-btn" class="link-btn" data-i18n="gate.student.code.back">Ubah nama/kelas</button></p>
+    </div>
+
     <div id="gate-step-student-code" class="gate-step" hidden>
-      <p class="step-count" data-i18n="gate.step.3of3">Langkah 3 dari 3</p>
-      <h2 data-i18n="gate.code.title">Masukkan kode akses</h2>
-      <p class="muted" data-i18n="gate.code.desc">Kode sesi kelas (6 huruf) dari layar guru, atau kode belajar mandiri yang dibagikan gurumu.</p>
+      <p class="step-count" data-i18n="gate.step.4of4">Langkah 4 dari 4</p>
+      <h2 id="gate-code-title" data-i18n="gate.code.class.title">Masukkan kode sesi kelas</h2>
+      <p class="muted" id="gate-code-desc" data-i18n="gate.code.class.desc">Kode 6 huruf yang tampil di layar gurumu.</p>
       <div class="key-input-row">
-        <input type="text" id="gate-student-code-input" data-i18n-placeholder="gate.code.placeholder" placeholder="Kode sesi kelas atau kode mandiri" autocomplete="off" maxlength="60">
+        <input type="text" id="gate-student-code-input" data-i18n-placeholder="gate.code.class.placeholder" placeholder="misal: REN57C" autocomplete="off" maxlength="60">
         <button type="button" id="gate-student-code-btn" class="btn btn-primary" data-i18n="action.join">Masuk</button>
       </div>
       <p class="onboarding-status" id="gate-student-code-status"></p>
-      <div class="gate-code-hints">
-        <div><strong data-i18n="gate.code.hint.class.k">Sesi kelas</strong><span data-i18n="gate.code.hint.class">Belajar bersama sesuai aktivitas yang dipilih guru. Kuis guru muncul otomatis.</span></div>
-        <div><strong data-i18n="gate.code.hint.self.k">Belajar mandiri</strong><span data-i18n="gate.code.hint.self">Belajar di rumah dengan urutan tahapan yang sama; checkpoint tetap dikonfirmasi guru.</span></div>
-      </div>
-      <p class="gate-back-row"><button type="button" id="gate-student-code-back-btn" class="link-btn" data-i18n="gate.student.code.back">Ubah nama/kelas</button></p>
+      <p class="gate-back-row"><button type="button" id="gate-student-code-back-btn" class="link-btn" data-i18n="gate.code.changemode">Ganti cara belajar</button></p>
     </div>
 
     <div id="gate-step-guest-code" class="gate-step" hidden>
