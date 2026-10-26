@@ -1,4 +1,4 @@
-# Physics Sandbox V9
+# Emergent
 
 Platform pembelajaran fisika untuk **Cambridge International AS & A Level Physics (9702)** berbasis *Project Based Learning* dan Generative AI. Topik yang aktif: **Magnetic Fields** (media penelitian tesis, UNJ).
 
@@ -54,3 +54,9 @@ npm test        # 15 uji API + 13 langkah uji browser
 ```
 
 Pengembang: Muhammad Afta Jadid, S.Pd., Gr. · Magister Pendidikan Fisika, Universitas Negeri Jakarta.
+
+
+## Desain & aset
+
+- Tampilan mengikuti template **Eduleb - Education HTML Template**, Copyright (c) Bestwpware, lisensi MIT, didistribusikan oleh ThemeWagon (https://themewagon.com/themes/eduleb/). Yang dipakai hanya bahasa visualnya (warna, tipografi Jost/DM Sans, bentuk kartu); foto dan gambar stok dari template tidak disertakan.
+- Maskot Emergent (anak berambut keriting bermain laptop, gaya chibi) dan logo di `assets/` adalah gambar vektor buatan sendiri untuk proyek ini.

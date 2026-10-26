@@ -1,4 +1,4 @@
-# Panduan Pemasangan Physics Sandbox V9
+# Panduan Pemasangan Emergent
 
 Panduan ini untuk pengelola situs (guru). Semua layanan memakai paket gratis, kecuali kredit API Claude yang sudah Bapak/Ibu beli.
 

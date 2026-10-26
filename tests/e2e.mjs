@@ -35,6 +35,15 @@ async function newPage(viewport) {
       const f = path.join(ROOT, "node_modules/mathjax/es5", u.match(/es5\/(.+)$/)[1]);
       return fs.existsSync(f) ? r.fulfill({ path: f, contentType: "text/javascript" }) : r.abort();
     }
+    // FONT_DIR (opsional): folder berisi file woff2 Jost/DM Sans untuk screenshot yang akurat
+    if (process.env.FONT_DIR && /fonts\.googleapis\.com\/css2/.test(u)) {
+      const css = fs.readdirSync(process.env.FONT_DIR).filter(f => /\.woff2$/.test(f)).map(f => {
+        const m = f.match(/^(jost|dm-sans)-latin-(\d00)-normal\.woff2$/); if (!m) return "";
+        return `@font-face{font-family:"${m[1] === "jost" ? "Jost" : "DM Sans"}";font-weight:${m[2]};src:url(https://fonts.gstatic.com/local/${f}) format("woff2")}`;
+      }).join("\n");
+      return r.fulfill({ body: css, contentType: "text/css" });
+    }
+    if (process.env.FONT_DIR && /fonts\.gstatic\.com\/local\//.test(u)) return r.fulfill({ path: path.join(process.env.FONT_DIR, u.split("/local/")[1]), contentType: "font/woff2" });
     return /googleapis|gstatic|jsdelivr/.test(u) ? r.abort() : r.continue();
   });
   pg.on("pageerror", e => pageErrors.push(String(e)));
@@ -77,6 +86,7 @@ await step("wrong code rejected, self-study code accepted", async () => {
   await pg.fill("#gate-student-code-input", "mandiri-uji");
   await pg.click("#gate-student-code-btn");
   await pg.waitForSelector("#site-shell:not([hidden])");
+  await pg.waitForFunction(() => document.getElementById("user-chip-mode").textContent.trim() !== "", null, { timeout: 10000 });
   assert.equal(await pg.textContent("#user-chip-mode"), "Mandiri");
   await pg.screenshot({ path: path.join(SHOTS, "02-home.png") });
 });
@@ -180,6 +190,14 @@ await step("Makerspace: streaming generate, edit, reflection to teacher", async 
   await pg.waitForFunction(() => /selesai/.test(document.getElementById("generate-status").textContent), null, { timeout: 15000 });
   const src = await pg.getAttribute("#preview-frame", "srcdoc");
   assert.ok(src.startsWith("<!DOCTYPE html>"));
+  // Koneksi putus di tengah streaming -> dilanjutkan otomatis tanpa klik
+  await pg.evaluate(() => fetch("/__dropnext"));
+  await pg.click("#generate-btn");
+  await pg.waitForFunction(() => /otomatis/.test(document.getElementById("generate-status").textContent), null, { timeout: 15000 });
+  await pg.waitForFunction(() => /selesai|dilanjutkan/.test(document.getElementById("generate-status").textContent), null, { timeout: 20000 });
+  const src2 = await pg.getAttribute("#preview-frame", "srcdoc");
+  assert.ok(src2.startsWith("<!DOCTYPE html>") && /<\/html>\s*$/.test(src2), "auto-resumed HTML must be complete");
+  assert.equal(await pg.isHidden("#continue-gen-btn"), true);
   await pg.fill("#edit-followup-input", "tambahkan label satuan");
   await pg.click("#edit-followup-btn");
   await pg.waitForFunction(() => /direvisi/.test(document.getElementById("edit-followup-status").textContent), null, { timeout: 15000 });
@@ -227,6 +245,9 @@ await step("Teacher panel: records, detail with LKPD answers, Excel & PDF export
   await tp.fill("#teacher-control-input", "guru-uji");
   await tp.click("#teacher-login-btn");
   await tp.waitForSelector("#teacher-panel:not([hidden])");
+  // Guru hanya bisa memilih topik yang terlihat oleh siswa (VISIBLE_TOPIC_IDS)
+  const topicOpts = await tp.$$eval("#teacher-topic-select option, #quiz-topic-select option", os => os.map(o => o.value));
+  assert.ok(topicOpts.length >= 2 && topicOpts.every(v => v === "magnetic-fields"), "teacher topic lists: " + topicOpts.join(","));
   await tp.screenshot({ path: path.join(SHOTS, "07-teacher-session.png") });
   await tp.click('.t-tab[data-pane="records"]');
   await tp.waitForSelector("#records-body .student-link");
@@ -248,7 +269,7 @@ await step("Teacher panel: records, detail with LKPD answers, Excel & PDF export
   const wb = XLSX.readFile(xPath);
   assert.deepEqual(wb.SheetNames, ["Rekap", "Konfirmasi", "LKPD", "Data Eksperimen", "Latihan", "Kuis", "Makerspace", "Checkpoint"]);
   const lk = XLSX.utils.sheet_to_json(wb.Sheets.LKPD);
-  assert.ok(lk.find(r => r.Butir === "conclusion" && /sebanding/.test(r.Jawaban)), "LKPD conclusion exported");
+  assert.ok(lk.find(r => /^\d\d · Uraian$/.test(r.Butir) && /sebanding/.test(r.Jawaban)), "LKPD conclusion exported");
   const exp = XLSX.utils.sheet_to_json(wb.Sheets["Data Eksperimen"]);
   assert.equal(exp.filter(r => r.Siswa === "Rina Putri").length, 5);
   const quiz = XLSX.utils.sheet_to_json(wb.Sheets.Kuis);

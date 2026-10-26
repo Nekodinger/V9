@@ -1,9 +1,9 @@
 {
-  "name": "physics-sandbox-v9",
+  "name": "emergent",
   "version": "9.0.0",
   "private": true,
   "type": "module",
-  "description": "Physics Sandbox V9 - Cambridge 9702 PjBL + Generative AI learning platform (static site + Vercel API + Supabase Postgres)",
+  "description": "Emergent - Cambridge 9702 PjBL + Generative AI learning platform (static site + Vercel API + Supabase Postgres)",
   "engines": {
     "node": ">=20"
   },

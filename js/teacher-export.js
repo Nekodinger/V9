@@ -48,7 +48,7 @@ window.TeacherExport = (function () {
         if (e.kind === "materi_check" || e.kind === "eksperimen_check") {
           (e.payload && e.payload.answers || []).forEach((a, i) => out.checks.push({ ...base, [t("teacher.xl.kind")]: e.kind === "materi_check" ? t("teacher.detail.materi") : t("teacher.detail.eksperimen"), [t("teacher.xl.time")]: ts(e.createdAt), [t("teacher.xl.score") + " (%)"]: pctv(e.score), "No": i + 1, [t("teacher.xl.question")]: a.q, [t("teacher.xl.answer")]: a.picked || "", [t("teacher.xl.correct")]: a.correct ? 1 : 0 }));
         } else if (e.kind === "latihan") {
-          out.lat.push({ ...base, [t("teacher.xl.item")]: e.item, [t("teacher.xl.time")]: ts(e.createdAt), [t("teacher.xl.answer")]: e.payload && e.payload.revealed ? t("teacher.detail.revealed") : (e.payload ? e.payload.picked : ""), [t("teacher.xl.correct")]: e.score == null ? "" : (e.score >= 100 ? 1 : 0) });
+          out.lat.push({ ...base, [t("teacher.xl.item")]: latihanLabel(e.item), [t("teacher.xl.time")]: ts(e.createdAt), [t("teacher.xl.answer")]: e.payload && e.payload.revealed ? t("teacher.detail.revealed") : (e.payload ? e.payload.picked : ""), [t("teacher.xl.correct")]: e.score == null ? "" : (e.score >= 100 ? 1 : 0) });
         } else if (e.kind === "lab_generate" || e.kind === "lab_edit") {
           out.lab.push({ ...base, [t("teacher.xl.time")]: ts(e.createdAt), [t("teacher.xl.kind")]: e.kind === "lab_edit" ? t("teacher.detail.edit") : t("teacher.detail.generate"), [t("teacher.xl.prompt")]: ((e.payload && (e.payload.instruction || e.payload.prompt)) || "").slice(0, 32000), [t("teacher.xl.htmlkb")]: e.payload && e.payload.html ? Math.round(e.payload.html.length / 102.4) / 10 : "" });
         }
@@ -61,7 +61,7 @@ window.TeacherExport = (function () {
         (x.rows || []).forEach(r => {
           const vals = (r.values || []).filter(v => v != null);
           const mean = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-          out.exp.push({ ...base, [t("teacher.xl.lkpdmode")]: modeName(x.topicId, x.variant), "I (A)": r.I, "Δm1 (g)": (r.values || [])[0] ?? "", "Δm2 (g)": (r.values || [])[1] ?? "", "Δm3 (g)": (r.values || [])[2] ?? "", [t("teacher.xl.mean") + " (g)"]: mean == null ? "" : Number(mean.toFixed(3)), "F (N)": mean == null ? "" : Number((mean * 9.81 / 1000).toPrecision(4)), [t("lkpd.fit.gradient")]: an.gradient != null ? Number(Number(an.gradient).toPrecision(4)) : "", [t("teacher.xl.bstudent")]: an.B_student || an.B || "", [t("teacher.xl.bfit")]: an.B_fromFit != null ? Number(Number(an.B_fromFit).toPrecision(4)) : "", [t("teacher.detail.aifeedback")]: x.feedback || "", [t("teacher.xl.time")]: ts(x.updatedAt) });
+          out.exp.push({ ...base, [t("teacher.xl.lkpdmode")]: modeName(x.topicId, x.variant), "I (A)": r.I, "Δm1 (g)": (r.values || [])[0] ?? "", "Δm2 (g)": (r.values || [])[1] ?? "", "Δm3 (g)": (r.values || [])[2] ?? "", [t("teacher.xl.mean") + " (g)"]: mean == null ? "" : Number(mean.toFixed(3)), "F (N)": mean == null ? "" : Number((mean * 9.81 / 1000).toPrecision(4)), [t("lkpd.fit.gradient")]: an.gradient != null ? Number(Number(an.gradient).toPrecision(4)) : "", [t("teacher.xl.bstudent")]: studentB(x, st.lkpd), [t("teacher.xl.bfit")]: an.B_fromFit != null ? Number(Number(an.B_fromFit).toPrecision(4)) : "", [t("teacher.detail.aifeedback")]: x.feedback || "", [t("teacher.xl.time")]: ts(x.updatedAt) });
         });
       });
       st.quizzes.forEach(z => (z.questions || []).forEach((q, i) => {
@@ -96,7 +96,7 @@ window.TeacherExport = (function () {
     XLSX.utils.book_append_sheet(wb, sheet(c.quiz, none), t("teacher.xl.sheet.quiz"));
     XLSX.utils.book_append_sheet(wb, sheet(c.lab, none), "Makerspace");
     XLSX.utils.book_append_sheet(wb, sheet(c.gates, none), t("teacher.xl.sheet.gates"));
-    wb.Props = { Title: "Physics Sandbox - " + t("teacher.xl.sheet.recap"), Author: "Physics Sandbox V9", CreatedDate: new Date() };
+    wb.Props = { Title: "Emergent - " + t("teacher.xl.sheet.recap"), Author: "Emergent", CreatedDate: new Date() };
     XLSX.writeFile(wb, `${safeName(name)}-${fileStamp()}.xlsx`);
   }
 
@@ -120,7 +120,7 @@ window.TeacherExport = (function () {
     const ink = [29, 29, 27], verm = [184, 57, 31], muted = [111, 108, 100], stone = [237, 234, 227];
     const header = (title, sub) => {
       doc.setFillColor(30, 31, 28); doc.rect(0, 0, W, 54, "F");
-      doc.setTextColor(241, 238, 230); doc.setFont("times", "normal"); doc.setFontSize(18); doc.text("Physics Sandbox", 36, 33);
+      doc.setTextColor(241, 238, 230); doc.setFont("times", "normal"); doc.setFontSize(18); doc.text("Emergent", 36, 33);
       doc.setFont("courier", "normal"); doc.setFontSize(8.5); doc.setTextColor(189, 184, 172); doc.text(pdfText(t("teacher.brandsub").toUpperCase() + "  -  " + ts(data.exportedAt || Date.now())), W - 36, 33, { align: "right" });
       doc.setTextColor(...ink); doc.setFont("times", "normal"); doc.setFontSize(20); doc.text(pdfText(title), 36, 88);
       if (sub) { doc.setFont("helvetica", "normal"); doc.setFontSize(9.5); doc.setTextColor(...muted); doc.text(pdfText(sub), 36, 104); }

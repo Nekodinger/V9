@@ -171,6 +171,18 @@ Object.assign(I18N_STRINGS, {
   "lab.phase.size": { id: "{{kb}} KB", en: "{{kb}} KB" },
   "lab.generate.success2": { id: "Simulasi selesai dalam {{s}} detik. Coba semua kontrolnya, lalu cek apakah fisikanya benar.", en: "Simulation finished in {{s}} s. Try every control, then check that the physics is right." },
   "lab.generate.continued": { id: "Kode sudah dilanjutkan ({{s}} detik).", en: "The code has been continued ({{s}} s)." },
+  "gate.float.k": { id: "Slide interaktif", en: "Interactive slides" },
+  "gate.float.v": { id: "Magnetic Fields", en: "Magnetic Fields" },
+  "hero.float1.k": { id: "Makerspace", en: "Makerspace" },
+  "hero.float1.v": { id: "Simulasi buatanmu", en: "Your own simulation" },
+  "hero.float2.v": { id: "LKPD neraca arus", en: "Current balance worksheet" },
+  "footer.tagline": { id: "Belajar fisika dengan bertanya, mengukur, dan membangun simulasi sendiri.", en: "Learn physics by asking, measuring and building your own simulations." },
+  "footer.stages": { id: "Tahapan belajar", en: "Learning stages" },
+  "footer.help": { id: "Bantuan", en: "Help" },
+  "footer.teacher": { id: "Panel Guru", en: "Teacher Panel" },
+  "footer.tutor": { id: "Tutor Fisika", en: "Physics Tutor" },
+  "footer.copy": { id: "Emergent · Platform PjBL & Generative AI untuk Cambridge 9702", en: "Emergent · PjBL & Generative AI platform for Cambridge 9702" },
+  "lab.generate.autoresume": { id: "Koneksi sempat terputus. Melanjutkan kode secara otomatis...", en: "The connection dropped. Continuing the code automatically..." },
   "lab.generate.truncated": { id: "Kode belum selesai (batas waktu/panjang tercapai). Klik \"Lanjutkan kode yang terpotong\".", en: "The code isn't finished yet (time or length limit). Click \"Continue the cut-off code\"." },
   "lab.generate.cancelled": { id: "Dibatalkan.", en: "Cancelled." },
   "lab.generate.failed": { id: "Gagal: ", en: "Failed: " },
@@ -342,5 +354,5 @@ Object.assign(I18N_STRINGS, {
   "teacher.xl.sheet.quiz": { id: "Kuis", en: "Quiz" },
   "teacher.xl.sheet.gates": { id: "Checkpoint", en: "Checkpoints" },
   "teacher.pdf.recap": { id: "Rekap kelas", en: "Class summary" },
-  "teacher.pdf.recap.sub": { id: "{{n}} siswa · Magnetic Fields · Physics Sandbox V9", en: "{{n}} students · Magnetic Fields · Physics Sandbox V9" }
+  "teacher.pdf.recap.sub": { id: "{{n}} siswa · Magnetic Fields · Emergent", en: "{{n}} students · Magnetic Fields · Emergent" }
 });

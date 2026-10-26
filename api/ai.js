@@ -68,6 +68,19 @@ async function logGeneration(sid, topicId, kind, payload) {
   } catch (e) { console.error("[ai] log", e); }
 }
 
+// Mode "continue": sambungkan hasil lanjutan ke catatan generate/edit terakhir siswa ini,
+// supaya Panel Guru menampilkan simulasi yang utuh (bukan versi yang terpotong).
+async function appendContinuation(sid, fullHtml, done) {
+  if (/^Tamu-|^teacher$|^anon$/.test(sid)) return;
+  try {
+    const patch = { html: fullHtml.slice(0, 200000), truncated: !done, continued: true };
+    if (jsonSize(patch) > 400000) return;
+    await q(`update ps_events set payload = coalesce(payload, '{}'::jsonb) || $1::jsonb
+             where id = (select id from ps_events where student_id = $2 and kind in ('lab_generate', 'lab_edit') order by created_at desc limit 1)`,
+      [J(patch), sid]);
+  } catch (e) { console.error("[ai] continue log", e); }
+}
+
 export default async function handler(req, res) {
   applyCors(req, res);
   if (req.method === "OPTIONS") { res.statusCode = 204; return res.end(); }
@@ -88,7 +101,7 @@ export default async function handler(req, res) {
   const topicId = str(b.topicId, 60);
 
   // ---- Susun permintaan ke Claude ----
-  let body, quotaKind, logKind = null, logPayload = null;
+  let body, quotaKind, logKind = null, logPayload = null, contPartial = null;
   if (mode === "chat") {
     const message = str(b.message, 1500);
     if (!message) return sendJson(res, 400, { error: en ? "Empty message." : "Pesan kosong." });
@@ -120,7 +133,7 @@ export default async function handler(req, res) {
       const partial = String(b.partial || "").slice(0, 200000);
       const task = b.html ? editPrompt(String(b.html).slice(0, 160000), str(b.instruction, 2000), lang) : str(b.prompt, 8000);
       if (!partial || !task) return sendJson(res, 400, { error: "Nothing to continue." });
-      userContent = continuePrompt(task, partial, lang); quotaKind = "edit";
+      userContent = continuePrompt(task, partial, lang); quotaKind = "edit"; contPartial = partial;
     }
     body = {
       model: MODELS.sim,
@@ -149,7 +162,7 @@ export default async function handler(req, res) {
   sseStart(res);
   sseSend(res, { t: "start", model: body.model });
   const controller = new AbortController();
-  let closed = false, timedOut = false, gotText = false, full = "";
+  let closed = false, timedOut = false, gotText = false, full = "", finishedOk = false;
   req.on("close", () => { if (!res.writableEnded) { closed = true; controller.abort(); } });
   const budget = mode === "chat" ? 60000 : timeBudgetMs();
   const timer = setTimeout(() => { timedOut = true; controller.abort(); }, budget);
@@ -161,6 +174,7 @@ export default async function handler(req, res) {
       onText: d => { gotText = true; full += d; sseSend(res, { t: "delta", text: d }); }
     });
     sseSend(res, { t: "done", stop: out.stopReason || "end_turn", usage: out.usage || null });
+    finishedOk = out.stopReason !== "max_tokens";
     if (logKind) logPayload.html = full.slice(0, 200000);
   } catch (e) {
     if (timedOut) {
@@ -175,6 +189,7 @@ export default async function handler(req, res) {
     clearTimeout(timer);
     clearInterval(ping);
     if (logKind && full) await logGeneration(sid, topicId, logKind, logPayload);
+    if (contPartial && full) await appendContinuation(sid, contPartial + full, finishedOk);
     if (!res.writableEnded) res.end();
   }
 }

@@ -83,10 +83,11 @@ function aiStream(body, h) {
           else if (ev.t === "error") { finished = true; h.onError && h.onError(ev.error); }
         }
       }
-      if (!finished) h.onTimeout && h.onTimeout();
+      // Stream berhenti tanpa event "done"/"timeout": koneksi terputus di tengah jalan.
+      if (!finished) h.onTimeout && h.onTimeout({ network: true });
     } catch (e) {
       if (controller.signal.aborted) return h.onAbort && h.onAbort();
-      h.onTimeout && h.onTimeout();
+      h.onTimeout && h.onTimeout({ network: true });
     }
   })();
   return { abort: () => controller.abort() };

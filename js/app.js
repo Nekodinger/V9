@@ -1,5 +1,5 @@
 /* ============================================================
-   app.js - logika utama Physics Sandbox V9
+   app.js - logika utama Emergent
    ------------------------------------------------------------
    Perubahan utama dari V7:
    - Tidak ada lagi API key pengguna. Semua panggilan AI lewat server
@@ -971,10 +971,10 @@ document.getElementById("welcome-start-btn").addEventListener("click", () => {
   const first = TOPICS.filter(tp => tp.status === "ready" && isTopicVisibleInNav(tp)).sort((a, b) => a.number - b.number)[0];
   if (first) selectTopic(first.id);
 });
-document.getElementById("welcome-chat-btn").addEventListener("click", () => {
+["welcome-chat-btn", "footer-chat-btn"].forEach(id => document.getElementById(id).addEventListener("click", () => {
   document.getElementById("chatbot-panel").hidden = false;
   if (window.Chatbot) Chatbot.onOpen();
-});
+}));
 document.getElementById("brand-home").addEventListener("click", () => {
   document.getElementById("topic-view").hidden = true;
   document.getElementById("welcome-panel").hidden = false;
@@ -2211,7 +2211,10 @@ function showGenPhase(phase, chars) {
   document.getElementById("gen-meta").textContent = chars ? t("lab.phase.size", { kb: (chars / 1024).toFixed(1) }) : "";
 }
 // kind: "simulate" | "edit" | "continue"; task: payload asli; onFinish(html, status)
-function runGeneration(kind, task, statusEl, onFinish) {
+// autoCount: berapa kali generate ini sudah dilanjutkan otomatis karena koneksi putus.
+const MAX_AUTO_RESUME = 2;
+function runGeneration(kind, task, statusEl, onFinish, autoCount) {
+  autoCount = autoCount || 0;
   const started = Date.now();
   let buffer = kind === "continue" ? (task.partial || "") : "";
   const base = kind === "continue" ? buffer.length : 0;
@@ -2232,8 +2235,20 @@ function runGeneration(kind, task, statusEl, onFinish) {
       const secs = Math.round((Date.now() - started) / 1000);
       onFinish(buffer, ev.stop === "max_tokens" ? "truncated" : "ok", secs);
     },
-    onTimeout: () => {
+    onTimeout: info => {
       setGenBusy(false); genJob = null;
+      // Koneksi internet putus di tengah streaming (mis. Wi-Fi sekolah): lanjutkan otomatis
+      // dari kode yang sudah diterima, maksimal MAX_AUTO_RESUME kali, tanpa siswa perlu klik.
+      if (info && info.network && autoCount < MAX_AUTO_RESUME && lastGenTask && buffer.length - base > 200 && !/<\/html>\s*$/i.test(buffer)) {
+        statusEl.textContent = t("lab.generate.autoresume");
+        setGenBusy(true);
+        showGenPhase("connecting", buffer.length - base);
+        setTimeout(() => {
+          setGenBusy(false);
+          runGeneration("continue", Object.assign({}, lastGenTask, { partial: buffer }), statusEl, onFinish, autoCount + 1);
+        }, 2000);
+        return;
+      }
       onFinish(buffer, "truncated", Math.round((Date.now() - started) / 1000));
     },
     onError: (msg, status) => {
@@ -2523,7 +2538,8 @@ function showGateStep(step) {
     document.getElementById("gate-student-class-input").value = getStudentClass();
   }
   const focusEl = document.querySelector("#gate-step-" + step + " input");
-  if (focusEl) setTimeout(() => focusEl.focus(), 30);
+  // Fokus otomatis hanya bila pengguna belum mengetik di kolom lain (jangan mencuri fokus).
+  if (focusEl) setTimeout(() => { const a = document.activeElement; if (!a || !/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) focusEl.focus(); }, 30);
 }
 function applyGate() {
   const step = computeGateStep();

@@ -92,7 +92,7 @@ const I18N_STRINGS = {
   "nav.group.a2": { id: "A Level Tambahan (Topik 12 - 25)", en: "A Level Extra (Topics 12 - 25)" },
 
   /* ---------------- Welcome panel ---------------- */
-  "welcome.title": { id: "Selamat datang di Physics Sandbox", en: "Welcome to Physics Sandbox" },
+  "welcome.title": { id: "Selamat datang di Emergent", en: "Welcome to Emergent" },
   "welcome.intro": { id: "Pilih topik di sebelah kiri untuk mulai belajar. Setiap topik punya empat bagian: <strong>Materi Belajar</strong>, <strong>Eksperimen</strong>, <strong>Latihan Soal</strong>, dan <strong>Makerspace</strong> tempat kamu bisa membuat simulasi fisikamu sendiri dengan bantuan AI.", en: "Pick a topic on the left to start learning. Each topic has four sections: <strong>Learning Material</strong>, <strong>Experiments</strong>, <strong>Practice Questions</strong>, and <strong>Makerspace</strong> where you can build your own physics simulation with AI's help." },
   "welcome.legend": { id: "Topik yang sudah lengkap ditandai <span class=\"badge badge-ready\">Siap</span>, topik lain masih <span class=\"badge badge-soon\">Segera</span> - struktur sudah disiapkan, tinggal diisi kontennya.", en: "Completed topics are marked <span class=\"badge badge-ready\">Ready</span>; other topics are still <span class=\"badge badge-soon\">Coming soon</span> - the structure is ready, content is on the way." },
   "badge.ready": { id: "Siap", en: "Ready" },

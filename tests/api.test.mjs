@@ -144,6 +144,10 @@ await test("AI simulate streams Opus HTML, edit and continue work, quota enforce
   assert.ok(ed.text.includes("</html>"));
   const cont = await aiStream({ mode: "continue", token, studentId: S1, prompt: "Buat simulasi F=BIL", partial: r.text.slice(0, 300) });
   assert.ok(cont.text.length > 10);
+  const dc = await api({ mode: "teacher_student_detail", controlCode: T, studentId: S1 });
+  const lastSim = dc.data.events.filter(e => e.kind === "lab_generate" || e.kind === "lab_edit").sort((a, b) => b.createdAt - a.createdAt)[0];
+  assert.equal(lastSim.kind, "lab_edit"); assert.equal(lastSim.payload.continued, true);
+  assert.equal(lastSim.payload.html, r.text.slice(0, 300) + cont.text, "continuation merged into the latest logged simulation");
   await aiStream({ mode: "simulate", token, studentId: S1, prompt: "lagi" });
   const third = await aiStream({ mode: "simulate", token, studentId: S1, prompt: "lagi lagi" });
   assert.equal(third.status, 429);

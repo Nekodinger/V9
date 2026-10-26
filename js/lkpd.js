@@ -30,6 +30,15 @@ window.LKPD = (function () {
     if (/e/.test(s)) s = Number(x).toExponential((d || 3) - 1);
     return getLang() === "id" ? s.replace(".", ",") : s;
   }
+  // Seperti fmt, tetapi mempertahankan nol di belakang (0,0100 bukan 0,01) agar angka penting tetap terlihat.
+  function fmtSig(x, d) {
+    if (x == null || !isFinite(x)) return "-";
+    const p = d || 3;
+    if (x === 0) return "0";
+    const e = Math.floor(Math.log10(Math.abs(Number(x.toPrecision(p)))));
+    const s = (e < -4 || e >= 6) ? x.toExponential(p - 1) : x.toFixed(Math.max(0, p - 1 - e));
+    return getLang() === "id" ? s.replace(".", ",") : s;
+  }
   const stripNum = s => String(s || "").replace(/^\s*\d+\.\s*/, "");
   const typeset = el => { if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise([el]).catch(() => {}); };
   const isExt = sec => !!sec.onlyFor;
@@ -331,7 +340,7 @@ window.LKPD = (function () {
       const avg = tr.querySelector("[data-avg]"), F = tr.querySelector("[data-f]");
       if (vals.length) {
         const m = vals.reduce((a, b) => a + b, 0) / vals.length;
-        avg.textContent = fmt(m, 3); F.textContent = fmt(m * f, 3);
+        avg.textContent = fmt(m, 3); F.textContent = fmtSig(m * f, 3);
       } else { avg.textContent = "-"; F.textContent = "-"; }
     });
   }
@@ -387,24 +396,24 @@ window.LKPD = (function () {
     const X = v => ml + v / xmax * (W - ml - mr), Y = v => H - mb - (v - ymin) / (ymax - ymin) * (H - mt - mb);
     const sx = niceStep(xmax, 6), sy = niceStep(ymax - ymin, 5);
     let g = "";
-    for (let v = 0; v <= xmax + 1e-12; v += sx) g += `<line x1="${X(v)}" y1="${mt}" x2="${X(v)}" y2="${H - mb}" stroke="#CFCAC0" stroke-width="1"/><text x="${X(v)}" y="${H - mb + 18}" font-size="12" font-family="IBM Plex Mono, monospace" fill="#6F6C64" text-anchor="middle">${fmt(v, 2)}</text>`;
-    for (let v = Math.ceil(ymin / sy) * sy; v <= ymax + 1e-12; v += sy) g += `<line x1="${ml}" y1="${Y(v)}" x2="${W - mr}" y2="${Y(v)}" stroke="#CFCAC0" stroke-width="1"/><text x="${ml - 8}" y="${Y(v) + 4}" font-size="12" font-family="IBM Plex Mono, monospace" fill="#6F6C64" text-anchor="end">${fmt(v, 2)}</text>`;
-    const line = ft ? `<line x1="${X(0)}" y1="${Y(ft.c)}" x2="${X(xmax)}" y2="${Y(ft.m * xmax + ft.c)}" stroke="#1F6F78" stroke-width="2" stroke-dasharray="7 4"/>` : "";
-    const dots = pts.map(p => `<g><line x1="${X(p.x) - 6}" y1="${Y(p.y) - 6}" x2="${X(p.x) + 6}" y2="${Y(p.y) + 6}" stroke="#B8391F" stroke-width="2"/><line x1="${X(p.x) - 6}" y1="${Y(p.y) + 6}" x2="${X(p.x) + 6}" y2="${Y(p.y) - 6}" stroke="#B8391F" stroke-width="2"/></g>`).join("");
+    for (let v = 0; v <= xmax + 1e-12; v += sx) g += `<line x1="${X(v)}" y1="${mt}" x2="${X(v)}" y2="${H - mb}" stroke="#E3E5F1" stroke-width="1"/><text x="${X(v)}" y="${H - mb + 18}" font-size="12" font-family="IBM Plex Mono, monospace" fill="#6B7080" text-anchor="middle">${fmt(v, 2)}</text>`;
+    for (let v = Math.ceil(ymin / sy) * sy; v <= ymax + 1e-12; v += sy) g += `<line x1="${ml}" y1="${Y(v)}" x2="${W - mr}" y2="${Y(v)}" stroke="#E3E5F1" stroke-width="1"/><text x="${ml - 8}" y="${Y(v) + 4}" font-size="12" font-family="IBM Plex Mono, monospace" fill="#6B7080" text-anchor="end">${fmt(v, 2)}</text>`;
+    const line = ft ? `<line x1="${X(0)}" y1="${Y(ft.c)}" x2="${X(xmax)}" y2="${Y(ft.m * xmax + ft.c)}" stroke="#525FE1" stroke-width="2" stroke-dasharray="7 4"/>` : "";
+    const dots = pts.map(p => `<g><line x1="${X(p.x) - 6}" y1="${Y(p.y) - 6}" x2="${X(p.x) + 6}" y2="${Y(p.y) + 6}" stroke="#F26B65" stroke-width="2"/><line x1="${X(p.x) - 6}" y1="${Y(p.y) + 6}" x2="${X(p.x) + 6}" y2="${Y(p.y) - 6}" stroke="#F26B65" stroke-width="2"/></g>`).join("");
     box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(t("lkpd.graph.aria"))}">${g}
-      <line x1="${ml}" y1="${mt}" x2="${ml}" y2="${H - mb}" stroke="#1D1D1B" stroke-width="1.5"/><line x1="${ml}" y1="${Y(0)}" x2="${W - mr}" y2="${Y(0)}" stroke="#1D1D1B" stroke-width="1.5"/>
+      <line x1="${ml}" y1="${mt}" x2="${ml}" y2="${H - mb}" stroke="#0B104A" stroke-width="1.5"/><line x1="${ml}" y1="${Y(0)}" x2="${W - mr}" y2="${Y(0)}" stroke="#0B104A" stroke-width="1.5"/>
       ${line}${dots}
-      <text x="${(ml + W - mr) / 2}" y="${H - 8}" font-size="13" font-family="Public Sans, Arial" fill="#1D1D1B" text-anchor="middle">I / A</text>
-      <text transform="translate(18 ${(mt + H - mb) / 2}) rotate(-90)" font-size="13" font-family="Public Sans, Arial" fill="#1D1D1B" text-anchor="middle">F / N</text></svg>`;
+      <text x="${(ml + W - mr) / 2}" y="${H - 8}" font-size="13" font-family="Public Sans, Arial" fill="#0B104A" text-anchor="middle">I / A</text>
+      <text transform="translate(18 ${(mt + H - mb) / 2}) rotate(-90)" font-size="13" font-family="Public Sans, Arial" fill="#0B104A" text-anchor="middle">F / N</text></svg>`;
     if (!ft || pts.length < 2) {
       fitBox.innerHTML = `<p class="muted small" style="margin:0">${t("lkpd.graph.empty")}</p>`;
       return;
     }
     const lk = ctx.lk;
     fitBox.innerHTML = `<p class="eyebrow teal" style="margin-bottom:6px">${t("lkpd.fit.title")}</p>
-      <div class="row"><span>${t("lkpd.fit.gradient")}</span><b>${fmt(ft.m, 3)} N A⁻¹</b></div>
+      <div class="row"><span>${t("lkpd.fit.gradient")}</span><b>${fmtSig(ft.m, 3)} N A⁻¹</b></div>
       <div class="row"><span>${t("lkpd.fit.intercept")}</span><b>${fmt(ft.c, 2)} N</b></div>
-      <div class="row"><span>R²</span><b>${fmt(ft.r2, 3)}</b></div>
+      <div class="row"><span>R²</span><b>${fmtSig(ft.r2, 3)}</b></div>
       <div class="row"><span>${t("lkpd.fit.points")}</span><b>${ft.n}</b></div>
       ${an.B !== null && (an.B < lk.plausibleB[0] || an.B > lk.plausibleB[1]) ? `<p class="small warn" style="margin:8px 0 0">${t("lkpd.graph.implausible.nolimit")}</p>` : ""}
       ${ft.m <= 0 ? `<p class="small warn" style="margin:8px 0 0">${t("lkpd.graph.negslope")}</p>` : ""}`;

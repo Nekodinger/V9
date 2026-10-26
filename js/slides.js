@@ -51,7 +51,7 @@ window.SlideViewer = (function () {
         emb.replaceWith(frame);
       } else {
         const box = document.createElement("div");
-        box.setAttribute("style", (emb.getAttribute("style") || "") + ";background:#E6E2D8;border:2px dashed #BDB8AC");
+        box.setAttribute("style", (emb.getAttribute("style") || "") + ";background:#ECEDFF;border:2px dashed #C9CDEB");
         emb.replaceWith(box);
       }
     });

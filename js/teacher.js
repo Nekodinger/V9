@@ -31,9 +31,12 @@ async function callBackend(mode, body) {
 function escapeHtml(str) { return String(str == null ? "" : str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 function escapeAttrT(str) { return escapeHtml(str); }
 function stripTags(html) { const d = document.createElement("div"); d.innerHTML = html || ""; return (d.textContent || "").replace(/\s+/g, " ").trim(); }
-function readyTopics() { return TOPICS.filter(tp => tp.status === "ready").sort((a, b) => a.number - b.number); }
-function allTopicsSorted() { return TOPICS.slice().sort((a, b) => a.number - b.number); }
-function topicTitle(id) { const tp = TOPICS.find(x => x.id === id); return tp ? `${tp.number}. ${trContent(tp.title)}` : (id || "-"); }
+// Hanya topik yang ditampilkan ke siswa (js/config.js, VISIBLE_TOPIC_IDS) yang boleh dipilih guru.
+function topicVisibleT(tp) { return typeof VISIBLE_TOPIC_IDS === "undefined" || !VISIBLE_TOPIC_IDS.length || VISIBLE_TOPIC_IDS.includes(tp.id); }
+function topicNo(tp) { return tp.syllabusno || tp.number; }
+function readyTopics() { return TOPICS.filter(tp => tp.status === "ready" && topicVisibleT(tp)).sort((a, b) => a.number - b.number); }
+function allTopicsSorted() { return TOPICS.filter(topicVisibleT).sort((a, b) => a.number - b.number); }
+function topicTitle(id) { const tp = TOPICS.find(x => x.id === id); return tp ? `${topicNo(tp)}. ${trContent(tp.title)}` : (id || "-"); }
 function tabLabelsT() { return [t("tab.materi"), t("tab.eksperimen"), t("tab.latihan"), t("tab.lab")]; }
 function fmtTime(ms, withDate) {
   if (!ms) return "-";
@@ -99,7 +102,7 @@ document.querySelectorAll(".t-tab").forEach(btn => btn.addEventListener("click",
 
 /* ---------------- 01 Sesi kelas ---------------- */
 function populateTopicSelects() {
-  const opts = readyTopics().map(tp => `<option value="${tp.id}">${tp.number}. ${escapeHtml(trContent(tp.title))}</option>`).join("");
+  const opts = readyTopics().map(tp => `<option value="${tp.id}">${topicNo(tp)}. ${escapeHtml(trContent(tp.title))}</option>`).join("");
   document.getElementById("teacher-topic-select").innerHTML = opts;
   document.getElementById("teacher-topic-select-2").innerHTML = opts;
 }
@@ -313,6 +316,8 @@ function lkpdAnswerRows(topicId, entry) {
   if (!def) return out;
   if (st.group) out.push({ item: t("lkpd.group"), question: "", answer: st.group });
   def.sections.forEach((sec, idx) => {
+    // Label seperti yang dilihat siswa di LKPD, mis. "12 · Uraian" (bukan id internal).
+    const label = String(idx + 1).padStart(2, "0") + " · " + t("lkpd.kind." + sec.type);
     if (sec.type === "materials" || sec.type === "steps") {
       const done = sec.items.filter((_, i) => st.tick && st.tick[idx + "-" + i]).length;
       out.push({ item: qText(sec.title), question: "", answer: `${done}/${sec.items.length} ${t("teacher.lkpd.ticked")}` });
@@ -320,15 +325,28 @@ function lkpdAnswerRows(topicId, entry) {
       sec.fields.forEach(f => out.push({ item: stripTags(trContent(f.label)), question: "", answer: (f.fixed !== undefined ? f.fixed : ((st.vars || {})[f.key] || "-")) + " " + trContent(f.unit) }));
     } else if (sec.type === "choice") {
       const a = (st.a || {})[sec.id];
-      out.push({ item: sec.id, question: qText(sec.q), answer: a == null ? "-" : String.fromCharCode(65 + a) + ". " + qText(sec.options[a]), correct: st.ck && st.ck[sec.id] ? st.ck[sec.id] === 1 : null, first: st.first ? st.first[sec.id] : undefined, tries: st.tries ? st.tries[sec.id] : undefined, key: String.fromCharCode(65 + sec.correct) });
+      out.push({ item: label, question: qText(sec.q), answer: a == null ? "-" : String.fromCharCode(65 + a) + ". " + qText(sec.options[a]), correct: st.ck && st.ck[sec.id] ? st.ck[sec.id] === 1 : null, first: st.first ? st.first[sec.id] : undefined, tries: st.tries ? st.tries[sec.id] : undefined, key: String.fromCharCode(65 + sec.correct) });
     } else if (sec.type === "calc") {
       const a = (st.a || {})[sec.id];
-      out.push({ item: sec.id, question: qText(sec.q), answer: a ? a + " " + sec.unit : "-", correct: st.ck && st.ck[sec.id] ? st.ck[sec.id] === 1 : null, first: st.first ? st.first[sec.id] : undefined, tries: st.tries ? st.tries[sec.id] : undefined });
+      out.push({ item: label, question: qText(sec.q), answer: a ? a + " " + sec.unit : "-", correct: st.ck && st.ck[sec.id] ? st.ck[sec.id] === 1 : null, first: st.first ? st.first[sec.id] : undefined, tries: st.tries ? st.tries[sec.id] : undefined });
     } else if (sec.type === "open") {
-      out.push({ item: sec.id, question: qText(sec.q), answer: (st.open || {})[sec.id] || "-", revealed: !!(st.revealed && st.revealed[sec.id]) });
+      out.push({ item: label, question: qText(sec.q), answer: (st.open || {})[sec.id] || "-", revealed: !!(st.revealed && st.revealed[sec.id]) });
     }
   });
   return out;
+}
+// Nilai B yang ditulis siswa: dari data eksperimen, atau dari jawaban "hitung B" di LKPD
+// (siswa sering mengisinya setelah menekan "Simpan Data").
+function studentB(x, lkpdList) {
+  const an = x.analysis || {};
+  if (an.B_student) return an.B_student;
+  const l = (lkpdList || []).find(e => e.topicId === x.topicId && e.mode === x.variant);
+  return (l && l.data && l.data.a && l.data.a.calcB) || "";
+}
+// "q4" -> "Soal 4" (id internal soal latihan)
+function latihanLabel(item) {
+  const m = /^q(\d+)$/.exec(item || "");
+  return m ? t("lkpd.kind.choice") + " " + m[1] : (item || "");
 }
 function correctnessHTML(r) {
   if (r.correct == null) return "";
@@ -361,11 +379,11 @@ function renderDetail(d) {
     const an = x.analysis || {};
     html += sec(`${t("teacher.detail.expdata")} · ${modeName(x.topicId, x.variant)}`,
       `<table class="quiz-results-table"><thead><tr><th>I (A)</th><th>Δm₁ (g)</th><th>Δm₂ (g)</th><th>Δm₃ (g)</th></tr></thead><tbody>${rows}</tbody></table>` +
-      `<p class="small" style="margin-top:8px">${t("teacher.detail.analysis", { grad: an.gradient != null ? Number(an.gradient).toPrecision(3) : "-", b: an.B_student || an.B || "-", bfit: an.B_fromFit != null ? Number(an.B_fromFit).toPrecision(3) : "-" })}</p>` +
+      `<p class="small" style="margin-top:8px">${t("teacher.detail.analysis", { grad: an.gradient != null ? Number(an.gradient).toPrecision(3) : "-", b: studentB(x, d.lkpd) || "-", bfit: an.B_fromFit != null ? Number(an.B_fromFit).toPrecision(3) : "-" })}</p>` +
       `<p class="small ${x.flagged ? "warn" : "ok"}">${t("teacher.detail.aifeedback")}: ${escapeHtml(x.feedback || "-")}</p>`);
   });
   const lat = eventsOf(d, "latihan");
-  html += sec(t("teacher.detail.latihan"), list(lat.map(e => [escapeHtml(e.item || "") + " · " + fmtTime(e.createdAt), e.payload && e.payload.revealed ? t("teacher.detail.revealed") : `${escapeHtml(e.payload ? e.payload.picked : "-")} <span class="pill ${e.score >= 100 ? "ok" : "bad"}">${e.score >= 100 ? t("quiz.results.correct") : t("quiz.results.incorrect")}</span>`])));
+  html += sec(t("teacher.detail.latihan"), list(lat.map(e => [escapeHtml(latihanLabel(e.item)) + " · " + fmtTime(e.createdAt), e.payload && e.payload.revealed ? t("teacher.detail.revealed") : `${escapeHtml(e.payload ? e.payload.picked : "-")} <span class="pill ${e.score >= 100 ? "ok" : "bad"}">${e.score >= 100 ? t("quiz.results.correct") : t("quiz.results.incorrect")}</span>`])));
   html += sec(t("teacher.detail.quiz"), d.quizzes.map(z => `<p class="small"><b>${escapeHtml(topicTitle(z.topicId))}</b> · ${fmtTime(z.submittedAt)} · ${t("teacher.rec.score")} ${pct(z.score)}</p>` +
     list((z.questions || []).map((q, i) => {
       const v = (z.answers || {})[q.id];
@@ -427,13 +445,13 @@ document.getElementById("export-xlsx-btn").addEventListener("click", async () =>
   const rows = filteredSummaries();
   if (!rows.length) return;
   const data = await fetchExport(rows.map(r => r.studentId));
-  if (data) TeacherExport.xlsx(data, rows, "rekap-physics-sandbox");
+  if (data) TeacherExport.xlsx(data, rows, "rekap-emergent");
 });
 document.getElementById("export-pdf-btn").addEventListener("click", async () => {
   const rows = filteredSummaries();
   if (!rows.length) return;
   const data = await fetchExport(rows.map(r => r.studentId));
-  if (data) TeacherExport.pdf(data, rows, "rekap-physics-sandbox");
+  if (data) TeacherExport.pdf(data, rows, "rekap-emergent");
 });
 document.getElementById("student-pdf-btn").addEventListener("click", async () => {
   if (!currentDetail || !currentDetail.data) return;
@@ -462,7 +480,7 @@ async function loadUsage() {
 /* ---------------- 03 Kuis Topik ---------------- */
 function newQuestionId() { return "q_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 function populateQuizTopicSelect() {
-  document.getElementById("quiz-topic-select").innerHTML = allTopicsSorted().map(tp => `<option value="${tp.id}">${tp.number}. ${escapeHtml(trContent(tp.title))}</option>`).join("");
+  document.getElementById("quiz-topic-select").innerHTML = allTopicsSorted().map(tp => `<option value="${tp.id}">${topicNo(tp)}. ${escapeHtml(trContent(tp.title))}</option>`).join("");
   const ready = readyTopics()[0];
   const vis = (typeof VISIBLE_TOPIC_IDS !== "undefined" && VISIBLE_TOPIC_IDS.length) ? VISIBLE_TOPIC_IDS[0] : (ready ? ready.id : null);
   if (vis) document.getElementById("quiz-topic-select").value = vis;

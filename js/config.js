@@ -1,5 +1,5 @@
 /* ============================================================
-   config.js - konfigurasi publik Physics Sandbox V9
+   config.js - konfigurasi publik Emergent
    ------------------------------------------------------------
    TIDAK ADA RAHASIA DI FILE INI. API key Claude, koneksi database,
    kode Panel Guru, kode belajar mandiri, dan kode eksplorasi semuanya
@@ -7,7 +7,7 @@
 
    API_BASE:
    - ""  (kosong, default) jika situs dibuka dari domain Vercel yang sama
-     dengan API-nya (mis. https://physics-sandbox-v9.vercel.app). Ini cara
+     dengan API-nya (mis. https://emergent-physics.vercel.app). Ini cara
      yang disarankan: tanpa CORS, paling cepat.
    - Isi dengan URL Vercel (tanpa garis miring di akhir) jika situs dibuka
      dari tempat lain, mis. GitHub Pages. Origin GitHub Pages itu juga harus

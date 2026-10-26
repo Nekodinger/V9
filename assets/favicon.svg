@@ -1,1 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Physics Sandbox"><rect width="64" height="64" fill="#1E1F1C"/><path d="M44.71 17.88 A19 19 0 1 0 46.12 44.71" fill="none" stroke="#7FB5BA" stroke-width="4.4" stroke-linecap="butt"/><path d="M55.11 34.73 L51.92 49.93 L40.32 39.49Z" fill="#7FB5BA"/><circle cx="32" cy="32" r="7" fill="none" stroke="#E9846E" stroke-width="4"/><circle cx="32" cy="32" r="2.4" fill="#E9846E"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#525FE1"/><svg x="1" y="2" width="62" height="62" viewBox="50 26 140 140"><g id="mascot">
+  <ellipse cx="120" cy="229" rx="78" ry="7" fill="#0b104a" opacity=".08"/>
+  <!-- rambut belakang -->
+  <circle cx="68.0" cy="126.0" r="17.9" fill="#2A1A16"/><circle cx="61.5" cy="109.4" r="21.3" fill="#2A1A16"/><circle cx="60.2" cy="91.5" r="17.9" fill="#2A1A16"/><circle cx="64.1" cy="74.1" r="21.3" fill="#2A1A16"/><circle cx="73.1" cy="58.6" r="17.9" fill="#2A1A16"/><circle cx="86.2" cy="46.4" r="21.3" fill="#2A1A16"/><circle cx="102.3" cy="38.7" r="17.9" fill="#2A1A16"/><circle cx="120.0" cy="36.0" r="21.3" fill="#2A1A16"/><circle cx="137.7" cy="38.7" r="17.9" fill="#2A1A16"/><circle cx="153.8" cy="46.4" r="21.3" fill="#2A1A16"/><circle cx="166.9" cy="58.6" r="17.9" fill="#2A1A16"/><circle cx="175.9" cy="74.1" r="21.3" fill="#2A1A16"/><circle cx="179.8" cy="91.5" r="17.9" fill="#2A1A16"/><circle cx="178.5" cy="109.4" r="21.3" fill="#2A1A16"/><circle cx="172.0" cy="126.0" r="17.9" fill="#2A1A16"/>
+  <ellipse cx="120" cy="100" rx="60" ry="52" fill="#2A1A16"/>
+  <!-- badan (hoodie) -->
+  <path d="M82 176 C82 150 98 140 120 140 C142 140 158 150 158 176 L162 206 L78 206 Z" fill="#525FE1"/>
+  <path d="M106 141 L120 156 L134 141" fill="none" stroke="#3F4AC4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- kaki bersila -->
+  <path d="M52 214 C52 200 80 196 120 202 C160 196 188 200 188 214 C188 226 160 228 120 222 C80 228 52 226 52 214 Z" fill="#0B104A"/>
+  <ellipse cx="58" cy="216" rx="10" ry="7" fill="#F26B65"/><ellipse cx="182" cy="216" rx="10" ry="7" fill="#F26B65"/>
+  <!-- telinga -->
+  <circle cx="68" cy="108" r="9" fill="#F7CFAF"/><circle cx="172" cy="108" r="9" fill="#F7CFAF"/>
+  <circle cx="68" cy="108" r="4" fill="#EDB894"/><circle cx="172" cy="108" r="4" fill="#EDB894"/>
+  <!-- wajah -->
+  <ellipse cx="120" cy="104" rx="50" ry="45" fill="#F7CFAF"/>
+  <!-- poni keriting -->
+  <circle cx="84.0" cy="66.0" r="15.0" fill="#2A1A16"/><circle cx="100.0" cy="56.0" r="16.0" fill="#2A1A16"/><circle cx="119.0" cy="52.0" r="16.0" fill="#2A1A16"/><circle cx="138.0" cy="55.0" r="16.0" fill="#2A1A16"/><circle cx="154.0" cy="65.0" r="15.0" fill="#2A1A16"/><circle cx="92.0" cy="60.0" r="12.0" fill="#2A1A16"/><circle cx="146.0" cy="59.0" r="12.0" fill="#2A1A16"/>
+  <path d="M77.2 67.5 a6.8 6.8 0 1 1 7.5 5.7" fill="none" stroke="#4B2F27" stroke-width="2" opacity=".85" stroke-linecap="round"/><path d="M92.8 57.6 a7.2 7.2 0 1 1 8.0 6.1" fill="none" stroke="#4B2F27" stroke-width="2" opacity=".85" stroke-linecap="round"/><path d="M111.8 53.6 a7.2 7.2 0 1 1 8.0 6.1" fill="none" stroke="#4B2F27" stroke-width="2" opacity=".85" stroke-linecap="round"/><path d="M130.8 56.6 a7.2 7.2 0 1 1 8.0 6.1" fill="none" stroke="#4B2F27" stroke-width="2" opacity=".85" stroke-linecap="round"/><path d="M147.2 66.5 a6.8 6.8 0 1 1 7.5 5.7" fill="none" stroke="#4B2F27" stroke-width="2" opacity=".85" stroke-linecap="round"/>
+  <path d="M52.1 93.3 a8.0 8.0 0 1 1 8.9 6.8" fill="none" stroke="#4B2F27" stroke-width="2" opacity=".85" stroke-linecap="round"/><path d="M65.1 60.4 a8.0 8.0 0 1 1 8.9 6.8" fill="none" stroke="#4B2F27" stroke-width="2" opacity=".85" stroke-linecap="round"/><path d="M110.4 38.1 a9.6 9.6 0 1 1 10.6 8.1" fill="none" stroke="#4B2F27" stroke-width="2" opacity=".85" stroke-linecap="round"/><path d="M158.9 60.4 a8.0 8.0 0 1 1 8.9 6.8" fill="none" stroke="#4B2F27" stroke-width="2" opacity=".85" stroke-linecap="round"/><path d="M171.8 93.3 a8.0 8.0 0 1 1 8.9 6.8" fill="none" stroke="#4B2F27" stroke-width="2" opacity=".85" stroke-linecap="round"/>
+  <!-- alis, mata, pipi, mulut -->
+  <path d="M93 92 q7 -5 14 0" fill="none" stroke="#2A1A16" stroke-width="3" stroke-linecap="round"/>
+  <path d="M133 92 q7 -5 14 0" fill="none" stroke="#2A1A16" stroke-width="3" stroke-linecap="round"/>
+  <ellipse cx="100" cy="108" rx="7.5" ry="9.5" fill="#1B1633"/><ellipse cx="140" cy="108" rx="7.5" ry="9.5" fill="#1B1633"/>
+  <circle cx="103" cy="104" r="3" fill="#fff"/><circle cx="143" cy="104" r="3" fill="#fff"/>
+  <circle cx="98" cy="112" r="1.4" fill="#fff"/><circle cx="138" cy="112" r="1.4" fill="#fff"/>
+  <ellipse cx="86" cy="123" rx="8" ry="4.5" fill="#F49A8E" opacity=".65"/><ellipse cx="154" cy="123" rx="8" ry="4.5" fill="#F49A8E" opacity=".65"/>
+  <path d="M112 123 q8 8 16 0" fill="#B34A3A" stroke="#8A3B2E" stroke-width="2" stroke-linejoin="round"/>
+  </g></svg></svg>

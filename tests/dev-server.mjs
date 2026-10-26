@@ -39,6 +39,7 @@ const health = (await import("../api/health.js")).default;
 
 /* ---------- Mock Claude API ---------- */
 export const mockLog = [];
+let dropNext = false;
 const DEMO_HTML = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Mock F=BIL</title>
 <style>body{font-family:sans-serif;background:#F3F1EC;margin:0;padding:16px}#out{font-size:22px}</style></head>
 <body><h1>Mock simulation F = BIL</h1><label>I <input id="i" type="range" min="0" max="5" step="0.5" value="2"></label>
@@ -99,6 +100,15 @@ const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; ch
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://x");
   if (url.pathname === "/api/backend") return backend(req, res);
+  // /__dropnext: request /api/ai berikutnya diputus di tengah streaming (simulasi Wi-Fi putus).
+  if (url.pathname === "/__dropnext") { dropNext = true; res.writeHead(204); return res.end(); }
+  if (url.pathname === "/api/ai" && dropNext) {
+    dropNext = false;
+    res.writeHead(200, { "content-type": "text/event-stream" });
+    res.write(`data: ${JSON.stringify({ t: "start", model: "mock" })}\n\n`);
+    res.write(`data: ${JSON.stringify({ t: "delta", text: DEMO_HTML.slice(0, DEMO_HTML.length / 2) })}\n\n`);
+    return setTimeout(() => res.socket.destroy(), 150);
+  }
   if (url.pathname === "/api/ai") return ai(req, res);
   if (url.pathname === "/api/health") return health(req, res);
   if (url.pathname === "/__mocklog") { res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify(mockLog.map(m => ({ model: m.body.model, stream: m.body.stream, thinking: m.body.thinking, output_config: m.body.output_config, system: !!m.body.system, max_tokens: m.body.max_tokens })))); }
@@ -114,4 +124,4 @@ const server = http.createServer(async (req, res) => {
 });
 
 if (process.env.MOCK_AI !== "0") mock.listen(MOCK_PORT, "127.0.0.1");
-server.listen(PORT, "127.0.0.1", () => console.log(`Physics Sandbox V9 dev server: http://localhost:${PORT}  (teacher code: ${process.env.TEACHER_CONTROL_CODE})`));
+server.listen(PORT, "127.0.0.1", () => console.log(`Emergent dev server: http://localhost:${PORT}  (teacher code: ${process.env.TEACHER_CONTROL_CODE})`));
