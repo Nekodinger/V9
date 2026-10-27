@@ -11,6 +11,14 @@ Platform pembelajaran fisika untuk **Cambridge International AS & A Level Physic
 
 Tutor Fisika (Claude Haiku 5.5) bisa dibuka dari semua halaman. Panel Guru (`teacher.html`) berisi sesi kelas, konfirmasi checkpoint, rekap progres dan semua jawaban siswa, ekspor **Excel (.xlsx)** dan **PDF**, kuis topik, dan pemakaian AI.
 
+## Akun siswa & kerja kelompok
+
+- Guru mendaftarkan siswa di Panel Guru → **02 Siswa & Kelompok** (satu baris per siswa: `Nama; Kelompok`). Sistem membuat PIN 6 digit; kartu login bisa dicetak dan PIN bisa direset.
+- Siswa masuk dengan **nama + PIN**, lalu memilih *Belajar di kelas* (kode sesi dari guru) atau *Belajar mandiri* (tanpa kode).
+- **Materi & Latihan Soal** dikerjakan per siswa. **Eksperimen & Makerspace** dikerjakan per kelompok, hanya di **satu perangkat milik ketua kelompok**. Anggota lain melihat nama ketua dan pratinjau hasil kelompok (baca saja). Persetujuan guru membuka tahap berikutnya untuk seluruh kelompok.
+- Guru bisa mengganti ketua dan melepas kunci perangkat bila ketua pindah perangkat.
+- **AI hanya di kelas.** Tutor Fisika, Makerspace, dan pemeriksaan data eksperimen oleh AI hanya berjalan saat siswa berada di sesi kelas yang aktif (diperiksa di server). Mode mandiri tidak memakai AI sama sekali, jadi kuota API tidak terpakai di luar kelas. Kode eksplorasi (validator) tetap bisa mencoba semua fitur, jadi jangan sebarkan kode itu.
+
 ## Yang baru di V9
 
 - **Tanpa API key di sisi pengguna.** Semua panggilan AI lewat server Vercel; API key Claude disimpan sebagai Environment Variable.
@@ -43,7 +51,7 @@ docs/SETUP.md                panduan pemasangan Vercel + Supabase + env vars
 
 ## Pemasangan
 
-Ikuti **[docs/SETUP.md](docs/SETUP.md)**. Ringkasnya: import repo ke Vercel, sambungkan Supabase, isi `ANTHROPIC_API_KEY`, `TEACHER_CONTROL_CODE`, `SELF_STUDY_CODE`, lalu redeploy.
+Ikuti **[docs/SETUP.md](docs/SETUP.md)**. Ringkasnya: import repo ke Vercel, sambungkan Supabase, isi `ANTHROPIC_API_KEY`, `TEACHER_CONTROL_CODE` (dan opsional `EXPLORE_CODE`), lalu redeploy.
 
 ## Pengembangan lokal
 

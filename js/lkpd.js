@@ -20,6 +20,8 @@ window.LKPD = (function () {
   const TRUEB_KEY = "physicsSandbox.virtualLabTrueB";
   let ctx = null; // { topic, mode, def, lk, st, root }
   let saveTimer = null;
+  // Mode baca-saja: anggota kelompok melihat LKPD yang dikerjakan ketua.
+  let readOnly = false;
 
   /* ---------- util ---------- */
   const esc = s => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -61,6 +63,7 @@ window.LKPD = (function () {
     } catch (e) { /* penyimpanan penuh: tetap jalan */ }
   }
   function touch() {
+    if (readOnly) return;
     ctx.st.updatedAt = Date.now();
     persistLocal();
     setSaveState("dirty");
@@ -77,16 +80,17 @@ window.LKPD = (function () {
   // Kirim cepat saat tab ditutup/disembunyikan (navigator.sendBeacon tetap
   // terkirim walau halaman sudah ditutup).
   function flushBeacon() {
-    if (!ctx || !saveTimer || getUserRole() !== "student") return;
+    if (!ctx || !saveTimer || readOnly || getUserRole() !== "student") return;
     clearTimeout(saveTimer); saveTimer = null;
     try {
-      const body = JSON.stringify(Object.assign({ mode: "lkpd_save", lang: getLang() }, payload(false)));
+      const body = JSON.stringify(Object.assign({ mode: "lkpd_save", lang: getLang() }, authFields(), payload(false)));
       if (navigator.sendBeacon) navigator.sendBeacon(apiUrl("/api/backend"), new Blob([body], { type: "text/plain;charset=utf-8" }));
     } catch (e) { /* abaikan */ }
   }
   async function pushServer(submit) {
     if (!ctx) return null;
     saveTimer = null;
+    if (readOnly) return { ok: true };
     if (getUserRole() !== "student") { setSaveState("local"); return { ok: true }; }
     const c = ctx;
     const s = stats();
@@ -272,7 +276,10 @@ window.LKPD = (function () {
         <div class="lkpd-identity">
           <div><span class="k">${t("field.fullname")}</span><span class="v">${esc(getStudentName() || "-")}</span></div>
           <div><span class="k">${t("field.class")}</span><span class="v">${esc(getStudentClass() || "-")}</span></div>
-          <div><span class="k">${t("lkpd.group")}</span><input type="text" data-group value="${esc(st.group || "")}" placeholder="${esc(t("lkpd.group.placeholder"))}"></div>
+          ${(() => { const acc = typeof getAccount === "function" ? getAccount() : null;
+            return acc && acc.groupName
+              ? `<div><span class="k">${t("lkpd.group")}</span><span class="v">${esc(acc.groupName)}${acc.leaderName ? ` · ${esc(t("group.leader.short"))} ${esc(acc.leaderName)}` : ""}</span></div>`
+              : `<div><span class="k">${t("lkpd.group")}</span><input type="text" data-group value="${esc(st.group || "")}" placeholder="${esc(t("lkpd.group.placeholder"))}"></div>`; })()}
           <div><span class="k">${t("lkpd.date")}</span><span class="v">${esc(today)}</span></div>
         </div>
         <div class="lkpd-progress"><span style="width:0"></span></div>
@@ -294,8 +301,20 @@ window.LKPD = (function () {
     refreshProgress();
     markSubmitted(st.submittedAt);
     if (mode === "virtual") initVlab();
+    if (readOnly) applyReadOnly();
     typeset(ctx.root);
     hydrateFromServer(topic.id, mode);
+  }
+  function applyReadOnly() {
+    ctx.root.classList.add("lkpd-readonly");
+    ctx.root.querySelectorAll("input, textarea, select, button").forEach(el => {
+      if (el.dataset.act === "print") return;
+      el.disabled = true;
+    });
+    const sub = ctx.root.querySelector('[data-act="submit"]');
+    if (sub) sub.hidden = true;
+    const ss = ctx.root.querySelector(".lkpd-save-state");
+    if (ss) ss.textContent = t("group.readonly.lkpd");
   }
 
   async function hydrateFromServer(topicId, mode) {
@@ -304,13 +323,13 @@ window.LKPD = (function () {
       if (!ctx || ctx.topic.id !== topicId || ctx.mode !== mode) return;
       const srv = data && data.modes && data.modes[mode];
       if (srv && srv.submittedAt) { ctx.st.submittedAt = srv.submittedAt; markSubmitted(srv.submittedAt); }
-      if (srv && srv.data && (srv.data.updatedAt || 0) > (ctx.st.updatedAt || 0) + 1000) {
+      if (srv && srv.data && (srv.data.updatedAt || 0) > (ctx.st.updatedAt || 0) + (readOnly ? 0 : 1000)) {
         const container = ctx.root.parentElement;
         const all = loadAll();
         all[keyOf(topicId, mode)] = Object.assign(emptyState(), srv.data, { submittedAt: srv.submittedAt || srv.data.submittedAt });
         try { localStorage.setItem(STORE, JSON.stringify(all)); } catch (e) { /* abaikan */ }
         render(container, ctx.topic, mode);
-        showToast(t("lkpd.restored"));
+        if (!readOnly) showToast(t("lkpd.restored"));
       }
     } catch (e) { /* offline: pakai salinan lokal */ }
   }
@@ -591,6 +610,9 @@ window.LKPD = (function () {
     summaryText,
     flush: () => { if (ctx && saveTimer) { clearTimeout(saveTimer); return pushServer(false); } },
     flushBeacon,
+    setReadOnly: v => { readOnly = !!v; },
+    isReadOnly: () => readOnly,
+    refresh: () => { if (ctx) return hydrateFromServer(ctx.topic.id, ctx.mode); },
     _ctx: () => ctx
   };
 })();

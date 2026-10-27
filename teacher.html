@@ -6,7 +6,8 @@
 <title>Panel Guru · Emergent</title>
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#525FE1">
-<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="icon" type="image/png" href="assets/favicon-64.png">
+<link rel="apple-touch-icon" href="assets/logo-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
@@ -20,7 +21,7 @@
 <header class="site-header">
   <div class="header-inner">
     <a href="index.html" class="brand" style="text-decoration:none">
-      <img class="brand-mark" src="assets/logo-mark.svg" alt="" width="38" height="38">
+      <img class="brand-mark" src="assets/logo-96.png" alt="Logo Emergent" width="44" height="44">
       <span class="brand-text">
         <span class="brand-title">Emergent</span>
         <span class="brand-sub" data-i18n="teacher.brandsub">Panel Guru</span>
@@ -51,9 +52,10 @@
   <div id="teacher-panel" hidden>
     <nav class="t-tabs" role="tablist">
       <button type="button" class="t-tab active" data-pane="session"><span class="tab-num">01</span><span data-i18n="teacher.tab.session">Sesi Kelas</span></button>
-      <button type="button" class="t-tab" data-pane="records"><span class="tab-num">02</span><span data-i18n="teacher.tab.records">Rekap &amp; Jawaban Siswa</span></button>
-      <button type="button" class="t-tab" data-pane="quiz"><span class="tab-num">03</span><span data-i18n="teacher.tab.quiz">Kuis Topik</span></button>
-      <button type="button" class="t-tab" data-pane="usage"><span class="tab-num">04</span><span data-i18n="teacher.tab.usage">Pemakaian AI</span></button>
+      <button type="button" class="t-tab" data-pane="accounts"><span class="tab-num">02</span><span data-i18n="teacher.tab.accounts">Siswa &amp; Kelompok</span></button>
+      <button type="button" class="t-tab" data-pane="records"><span class="tab-num">03</span><span data-i18n="teacher.tab.records">Rekap &amp; Jawaban Siswa</span></button>
+      <button type="button" class="t-tab" data-pane="quiz"><span class="tab-num">04</span><span data-i18n="teacher.tab.quiz">Kuis Topik</span></button>
+      <button type="button" class="t-tab" data-pane="usage"><span class="tab-num">05</span><span data-i18n="teacher.tab.usage">Pemakaian AI</span></button>
     </nav>
 
     <!-- 01 Sesi kelas -->
@@ -127,6 +129,48 @@
     </section>
 
     <!-- 02 Rekap & jawaban -->
+    <!-- 02 Siswa & kelompok -->
+    <section class="t-pane" id="pane-accounts">
+      <div class="t-grid">
+        <div>
+          <div class="t-card">
+            <h3 data-i18n="acc.add.title">Daftarkan siswa</h3>
+            <p class="t-card-desc" data-i18n="acc.add.desc">Satu siswa per baris. Tulis kelompoknya setelah tanda titik koma. Siswa pertama di tiap kelompok otomatis menjadi ketua (bisa diganti).</p>
+            <label><span data-i18n="field.class">Kelas</span><input type="text" id="acc-add-class" maxlength="20" data-i18n-placeholder="acc.add.class.placeholder" placeholder="misal: XII IPA 1"></label>
+            <label><span data-i18n="acc.add.lines">Nama siswa; kelompok</span>
+              <textarea id="acc-add-lines" rows="8" data-i18n-placeholder="acc.add.lines.placeholder" placeholder="Rina Putri; Kelompok 1&#10;Budi Santoso; Kelompok 1&#10;Sari Dewi; Kelompok 2"></textarea>
+            </label>
+            <p class="muted small" data-i18n="acc.add.tip">Bisa juga ditempel langsung dari Excel (kolom Nama lalu Kelompok).</p>
+            <button type="button" id="acc-add-btn" class="btn btn-primary" data-i18n="acc.add.btn">Daftarkan &amp; buat PIN</button>
+            <p class="onboarding-status" id="acc-add-status"></p>
+          </div>
+          <div class="t-card">
+            <h3 data-i18n="acc.howto.title">Cara siswa masuk</h3>
+            <ol class="small acc-howto">
+              <li data-i18n="acc.howto.1">Bagikan kartu login (nama + PIN 6 angka) ke tiap siswa.</li>
+              <li data-i18n="acc.howto.2">Siswa membuka situs, pilih "Saya siswa", lalu ketik nama dan PIN.</li>
+              <li data-i18n="acc.howto.3">Materi dan Latihan Soal dikerjakan sendiri-sendiri. Eksperimen dan Makerspace dikerjakan kelompok di perangkat ketua; anggota melihat hasilnya (baca saja).</li>
+              <li data-i18n="acc.howto.4">Kalau ketua lupa menutup perangkat lama, klik "Lepas kunci perangkat" pada kelompoknya.</li>
+            </ol>
+          </div>
+        </div>
+        <div>
+          <div class="t-card">
+            <div class="t-toolbar">
+              <select id="acc-class-filter"></select>
+              <label class="acc-showpin"><input type="checkbox" id="acc-show-pin"> <span data-i18n="acc.showpin">Tampilkan PIN</span></label>
+              <span class="spacer"></span>
+              <button type="button" class="btn btn-secondary btn-small" id="acc-print-btn" data-i18n="acc.print.btn">Cetak kartu login</button>
+              <button type="button" class="btn btn-secondary btn-small" id="acc-xlsx-btn" data-i18n="acc.xlsx.btn">Ekspor Excel</button>
+              <button type="button" class="btn btn-ghost btn-small" id="acc-refresh-btn" data-i18n="teacher.records.refresh">Muat ulang</button>
+            </div>
+            <p class="muted small" id="acc-status"></p>
+            <div id="acc-groups"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="t-pane" id="pane-records">
       <div class="t-stats" id="records-stats"></div>
       <div class="t-toolbar">
@@ -143,6 +187,7 @@
           <thead><tr>
             <th data-i18n="teacher.rec.student">Siswa</th>
             <th data-i18n="teacher.rec.class">Kelas</th>
+            <th data-i18n="teacher.rec.group">Kelompok</th>
             <th data-i18n="teacher.rec.stage">Tahap</th>
             <th data-i18n="teacher.rec.slides">Slide</th>
             <th data-i18n="teacher.rec.materi">Konfirmasi Materi</th>
@@ -262,5 +307,6 @@
 <script src="vendor/jspdf.plugin.autotable.min.js" defer></script>
 <script src="js/teacher-export.js" defer></script>
 <script src="js/teacher.js" defer></script>
+<script src="js/teacher-accounts.js" defer></script>
 </body>
 </html>

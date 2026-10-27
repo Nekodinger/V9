@@ -96,6 +96,7 @@ document.querySelectorAll(".t-tab").forEach(btn => btn.addEventListener("click",
   document.querySelectorAll(".t-tab").forEach(b => b.classList.toggle("active", b === btn));
   document.querySelectorAll(".t-pane").forEach(p => p.classList.toggle("active", p.id === "pane-" + btn.dataset.pane));
   if (btn.dataset.pane === "records") loadOverview();
+  if (btn.dataset.pane === "accounts" && typeof loadAccounts === "function") loadAccounts();
   if (btn.dataset.pane === "usage") loadUsage();
   if (btn.dataset.pane === "quiz") loadQuizHistory();
 }));
@@ -141,7 +142,9 @@ function renderGatePending(list) {
   const body = document.getElementById("gate-pending-body");
   if (!gateList.length) { body.innerHTML = `<tr><td colspan="5" class="muted small">${t("teacher.gate.empty")}</td></tr>`; return; }
   body.innerHTML = gateList.map((req, i) => `<tr>
-      <td><button type="button" class="student-link" data-sid="${escapeAttrT(req.studentId)}">${escapeHtml(req.studentId)}</button><br><span class="muted small">${escapeHtml(topicTitle(req.topicId))}</span></td>
+      <td>${/^grp:/.test(req.studentId)
+        ? `<strong>${escapeHtml(req.label || req.studentId)}</strong> <span class="pill solid">${t("teacher.gate.groupwork")}</span>`
+        : `<button type="button" class="student-link" data-sid="${escapeAttrT(req.studentId)}">${escapeHtml(req.label || req.studentId)}</button>`}<br><span class="muted small">${escapeHtml(topicTitle(req.topicId))}</span></td>
       <td>${escapeHtml(stageLabel(req.stage))}</td>
       <td class="small" style="max-width:300px;white-space:pre-wrap">${escapeHtml(req.summary)}</td>
       <td class="num">${relativeTime(req.submittedAt)}</td>
@@ -206,6 +209,10 @@ function modeName(topicId, mode) {
 // Ringkasan per siswa dari teacher_overview (dipakai tabel & ekspor).
 function buildSummaries(ov) {
   const byId = {};
+  const groupsById = {};
+  (ov.groups || []).forEach(g => { groupsById[g.groupId] = g; });
+  const accById = {};
+  (ov.accounts || []).forEach(a => { accById[a.studentId] = a; });
   ov.students.forEach(s => {
     byId[s.studentId] = { s, events: {}, lkpd: [], gates: [], quizzes: [], exps: [], latihan: { right: 0, total: 0 } };
   });
@@ -225,6 +232,8 @@ function buildSummaries(ov) {
     const gate = stage => { const g = x.gates.filter(g => g.stage === stage).sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0))[0]; return g ? g.status : null; };
     return {
       studentId: x.s.studentId, name: x.s.name || x.s.studentId, className: x.s.className || "",
+      groupName: accById[x.s.studentId] && groupsById[accById[x.s.studentId].groupId] ? groupsById[accById[x.s.studentId].groupId].name : "",
+      isLeader: !!(accById[x.s.studentId] && groupsById[accById[x.s.studentId].groupId] && groupsById[accById[x.s.studentId].groupId].leaderId === x.s.studentId),
       lastSeen: x.s.lastSeen, stageIndex: maxStage,
       slidesPct: x.events.slides_progress ? x.events.slides_progress.best : null,
       materiBest: x.events.materi_check ? x.events.materi_check.best : null,
@@ -237,7 +246,7 @@ function buildSummaries(ov) {
       gateEks: gate("eksperimen"), gateLab: gate("lab"),
       expCount: x.exps.length
     };
-  }).sort((a, b) => (a.className || "").localeCompare(b.className || "") || a.name.localeCompare(b.name));
+  }).filter(x => !/^grp:/.test(x.studentId)).sort((a, b) => (a.className || "").localeCompare(b.className || "") || a.name.localeCompare(b.name));
 }
 function gatePill(status) {
   if (!status) return `<span class="pill">-</span>`;
@@ -257,10 +266,11 @@ function filteredSummaries() {
 function renderRecords() {
   const rows = filteredSummaries();
   const body = document.getElementById("records-body");
-  if (!rows.length) { body.innerHTML = `<tr><td colspan="11" class="muted small">${t("teacher.records.empty")}</td></tr>`; }
+  if (!rows.length) { body.innerHTML = `<tr><td colspan="12" class="muted small">${t("teacher.records.empty")}</td></tr>`; }
   else body.innerHTML = rows.map(s => `<tr>
       <td><button type="button" class="student-link" data-sid="${escapeAttrT(s.studentId)}">${escapeHtml(s.name)}</button></td>
       <td>${escapeHtml(s.className || "-")}</td>
+      <td>${s.groupName ? escapeHtml(s.groupName) + (s.isLeader ? ` <span class="pill solid">${t("teacher.rec.leader")}</span>` : "") : "-"}</td>
       <td>${stageSteps(s.stageIndex)}</td>
       <td class="num">${s.slidesPct == null ? "-" : `<span class="meter"><span style="width:${Math.min(100, s.slidesPct)}%"></span></span>${pct(s.slidesPct)}`}</td>
       <td class="num">${s.materiBest == null ? "-" : pct(s.materiBest) + ` <span class="muted">(${s.materiTries}x)</span>`}</td>

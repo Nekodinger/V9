@@ -12,11 +12,13 @@
    terkena batas waktu 60 detik seperti Apps Script di V7.
    ============================================================ */
 import { applyCors, originAllowed, readJsonBody, sendJson, sseStart, sseSend } from "../lib/http.js";
-import { verifyToken, isTeacher } from "../lib/auth.js";
+import { isTeacher } from "../lib/auth.js";
+import { resolveStudent, workKey, assertGroupWriter, AccountError } from "../lib/accounts.js";
 import { aiConfigured, streamMessage, describeAiError, MODELS } from "../lib/anthropic.js";
 import { SIM_SYSTEM_PROMPT, buildChatSystemPrompt } from "../lib/prompts.js";
 import { takeQuota } from "../lib/usage.js";
 import { q, J, jsonSize } from "../lib/db.js";
+import { readSession, codeMatches } from "../lib/handlers.js";
 
 const str = (v, n) => String(v == null ? "" : v).trim().slice(0, n);
 
@@ -95,10 +97,35 @@ export default async function handler(req, res) {
   if (!aiConfigured()) return sendJson(res, 503, { error: en ? "The AI is not configured on the server yet (ANTHROPIC_API_KEY)." : "AI belum dikonfigurasi di server (ANTHROPIC_API_KEY)." });
 
   const teacher = b.controlCode && isTeacher(b.controlCode);
-  const tok = verifyToken(b.token);
-  if (!teacher && !tok) return sendJson(res, 401, { error: en ? "Your access has expired. Open Settings and enter your class or self-study code again." : "Akses kamu sudah kedaluwarsa. Buka Pengaturan lalu masukkan lagi kode kelas atau kode belajar mandiri." });
-  const sid = teacher ? "teacher" : (str(b.studentId, 80) || "anon");
+  let ctx = null;
+  try { ctx = teacher ? null : await resolveStudent(b); }
+  catch (e) { return sendJson(res, 500, { error: String(e.message || e).slice(0, 200) }); }
+  if (!teacher && !ctx) return sendJson(res, 401, { error: en ? "Your login has ended. Sign in again with your name and PIN." : "Sesi login kamu sudah berakhir. Masuk lagi dengan nama dan PIN dari gurumu.", code: "AUTH" });
+  // AI (Tutor Fisika & Makerspace) untuk siswa hanya saat belajar di kelas:
+  // harus ada sesi kelas aktif dan siswa memakai kode sesi itu. Mode mandiri
+  // tidak memakai AI sehingga kuota API guru tidak terpakai di luar kelas.
+  // Guru dan validator (kode eksplorasi) tidak terkena aturan ini.
+  if (!teacher && !ctx.guest) {
+    let st;
+    try { st = await readSession(); }
+    catch (e) { return sendJson(res, 500, { error: String(e.message || e).slice(0, 200) }); }
+    if (!codeMatches(st, str(b.sessionCode, 20))) {
+      return sendJson(res, 403, { code: "CLASS_ONLY", error: en
+        ? "The AI tutor and Makerspace are only available during a class session with your teacher."
+        : "Tutor Fisika dan Makerspace hanya bisa dipakai saat belajar di kelas bersama guru (sesi kelas aktif)." });
+    }
+  }
   const topicId = str(b.topicId, 60);
+  // Chat tutor: per siswa. Simulasi Makerspace: kerja kelompok (kuota & catatan per kelompok,
+  // hanya ketua, hanya dari satu perangkat).
+  const sid = teacher ? "teacher" : (mode === "chat" ? ctx.sid : workKey(ctx));
+  if (!teacher && mode !== "chat" && !ctx.guest) {
+    try { await assertGroupWriter(ctx, topicId, "lab", str(b.deviceId, 80), en); }
+    catch (e) {
+      if (e instanceof AccountError) return sendJson(res, e.status, { error: e.message, code: e.code });
+      return sendJson(res, 500, { error: String(e.message || e).slice(0, 200) });
+    }
+  }
 
   // ---- Susun permintaan ke Claude ----
   let body, quotaKind, logKind = null, logPayload = null, contPartial = null;

@@ -15,8 +15,31 @@ function apiUrl(path) {
   return base + path;
 }
 
+// ID perangkat acak (per browser) untuk kunci "satu perangkat" kerja kelompok.
+function getDeviceId() {
+  const K = "emergent.deviceId";
+  let id = "";
+  try { id = localStorage.getItem(K) || ""; } catch (e) { /* abaikan */ }
+  if (!id) {
+    id = "d_" + Array.from(crypto.getRandomValues(new Uint8Array(12)), b => b.toString(16).padStart(2, "0")).join("");
+    try { localStorage.setItem(K, id); } catch (e) { /* abaikan */ }
+  }
+  return id;
+}
+// Token akun siswa & ID perangkat ikut terkirim otomatis di setiap permintaan siswa.
+function authFields() {
+  const out = { deviceId: getDeviceId() };
+  if (typeof getAccessToken === "function" && getAccessToken()) out.token = getAccessToken();
+  try { const sc = localStorage.getItem("physicsSandbox.classSessionCode"); if (sc) out.sessionCode = sc; } catch (e) { /* abaikan */ }
+  return out;
+}
+function notifyApiCode(data) {
+  if (!data || !data.code || typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent("emergent-api-code", { detail: data }));
+}
+
 async function apiCall(mode, body) {
-  const payload = Object.assign({ lang: typeof getLang === "function" ? getLang() : "id" }, body || {}, { mode });
+  const payload = Object.assign({ lang: typeof getLang === "function" ? getLang() : "id" }, authFields(), body || {}, { mode });
   let resp;
   try {
     resp = await fetch(apiUrl("/api/backend"), {
@@ -33,13 +56,14 @@ async function apiCall(mode, body) {
   try { data = await resp.json(); } catch (e) { data = { error: "HTTP " + resp.status }; }
   if (!resp.ok && !data.error) data.error = "HTTP " + resp.status;
   data._status = resp.status;
+  notifyApiCode(data);
   return data;
 }
 
 function aiStream(body, h) {
   h = h || {};
   const controller = new AbortController();
-  const payload = Object.assign({ lang: typeof getLang === "function" ? getLang() : "id" }, body || {});
+  const payload = Object.assign({ lang: typeof getLang === "function" ? getLang() : "id" }, authFields(), body || {});
   (async () => {
     let resp;
     try {
@@ -56,8 +80,9 @@ function aiStream(body, h) {
     const ct = resp.headers.get("content-type") || "";
     if (!ct.includes("text/event-stream")) {
       let msg = "HTTP " + resp.status;
-      try { const d = await resp.json(); if (d.error) msg = d.error; } catch (e) { /* abaikan */ }
-      return h.onError && h.onError(msg, resp.status);
+      let code = null;
+      try { const d = await resp.json(); if (d.error) msg = d.error; code = d.code || null; notifyApiCode(d); } catch (e) { /* abaikan */ }
+      return h.onError && h.onError(msg, resp.status, code);
     }
     const reader = resp.body.getReader();
     const dec = new TextDecoder();

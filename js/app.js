@@ -101,6 +101,25 @@ function mergeServerProgress(serverProgress) {
   if (changed) saveProgress(p);
   return changed;
 }
+const STORAGE_KEY_ACCOUNT = "emergent.account";
+// Akun siswa (dibuat guru): { studentId, name, className, groupId, groupName, leaderId, leaderName, isLeader, members }
+function getAccount() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY_ACCOUNT) || "null"); } catch (e) { return null; }
+}
+function setAccount(acc) {
+  if (!acc) { localStorage.removeItem(STORAGE_KEY_ACCOUNT); return; }
+  const prev = getAccount();
+  localStorage.setItem(STORAGE_KEY_ACCOUNT, JSON.stringify(acc));
+  localStorage.setItem(STORAGE_KEY_STUDENT_NAME, acc.name || "");
+  localStorage.setItem(STORAGE_KEY_STUDENT_CLASS, acc.className || "");
+  // Ketua kelompok diganti guru saat siswa sedang di Eksperimen/Makerspace
+  if (prev && (prev.isLeader !== acc.isLeader || prev.groupId !== acc.groupId) && typeof enterGroupSection === "function") {
+    const tab = document.querySelector(".tab-btn.active")?.dataset.tab;
+    if (GROUP_TABS.includes(tab) && currentTopic) enterGroupSection(tab, true);
+  }
+}
+function inGroup() { const a = getAccount(); return getUserRole() === "student" && !!(a && a.groupId); }
+function isGroupLeader() { const a = getAccount(); return !inGroup() || !!(a && a.isLeader); }
 function getAccessToken() { return localStorage.getItem(STORAGE_KEY_TOKEN) || ""; }
 function getAccessKind() { return localStorage.getItem(STORAGE_KEY_ACCESS_KIND) || ""; }
 function setAccess(kind, token) {
@@ -428,7 +447,7 @@ function handleGateDecision(topicId, stage, st) {
       // Menyetujui Eksperimen membuka Latihan Soal DAN Lab Simulasi
       // sekaligus (index 3 = tab terakhir), sesuai permintaan: guru cukup
       // konfirmasi sekali di sini, dua tab berikutnya langsung terbuka.
-      advanceProgress(topicId, TAB_ORDER.length - 1);
+      if (getUnlockedTabIndex(topicId) >= 1) advanceProgress(topicId, TAB_ORDER.length - 1);
       showToast(t("gate.eksperimen.approved.toast"));
     } else {
       showToast(t("gate.lab.approved.toast"));
@@ -463,8 +482,9 @@ function renderGateBanner(stage) {
     el.className = "gate-banner gate-rejected";
     const note = cached.note ? `<br><em>${t("gate.banner.notefromteacher")}: ${escapeAttr(cached.note)}</em>` : "";
     const retryId = stage + "-gate-retry-btn";
+    const canRetry = isGroupLeader();
     el.innerHTML = `<span class="gate-banner-icon">&#10007;</span> ${t("gate.banner.rejected." + stage)}${note}` +
-      `<br><button type="button" class="btn btn-secondary btn-small gate-retry-btn" id="${retryId}">${t("gate.banner.retrybtn")}</button>`;
+      (canRetry ? `<br><button type="button" class="btn btn-secondary btn-small gate-retry-btn" id="${retryId}">${t("gate.banner.retrybtn")}</button>` : "");
     const retryBtn = document.getElementById(retryId);
     if (retryBtn) retryBtn.addEventListener("click", () => {
       if (stage === "eksperimen") startEksperimenGate();
@@ -492,7 +512,9 @@ async function checkGateOnTopicOpen(topicId) {
       if (!data[stage]) return;
       const prev = getGateCacheEntry(topicId, stage);
       setGateCacheEntry(topicId, stage, data[stage]);
-      if (data[stage].status === "approved" && stage === "eksperimen" && (!prev || prev.status !== "approved")) {
+      // Persetujuan Eksperimen KELOMPOK tidak melewati Materi: anggota yang
+      // belum lulus konfirmasi Materi-nya sendiri tetap mulai dari Materi.
+      if (data[stage].status === "approved" && stage === "eksperimen" && getUnlockedTabIndex(topicId) >= 1 && (!prev || prev.status !== "approved" || getUnlockedTabIndex(topicId) < TAB_ORDER.length - 1)) {
         advanceProgress(topicId, TAB_ORDER.length - 1);
       }
       if (data[stage].status === "pending" && gatePollTopicId !== topicId) {
@@ -638,6 +660,7 @@ async function syncClassSession() {
       progress: getProgress()
     });
     if (data.error) return;
+    if (data.account) setAccount(data.account);
     if (mergeServerProgress(data.progress) && currentTopic) {
       renderNav();
       const tab = document.querySelector(".tab-btn.active")?.dataset.tab;
@@ -870,7 +893,31 @@ function showToast(message) {
 }
 
 /* ---------------- Identitas di header ---------------- */
+// AI (Tutor Fisika, Makerspace, cek data AI) hanya saat belajar di kelas.
+// Validator (kode eksplorasi) tetap bisa mencoba semuanya.
+function aiAvailable() {
+  const role = getUserRole();
+  if (role === "guest" || getAccessKind() === "explore") return true;
+  return isInClassSession();
+}
+function applyAiAvailability() {
+  const on = aiAvailable();
+  document.body.classList.toggle("ai-off", !on);
+  const lab = document.getElementById("panel-lab");
+  if (lab) lab.classList.toggle("ai-off", !on);
+  const note = document.getElementById("lab-class-only");
+  if (note) note.hidden = on;
+  if (!on) {
+    const panel = document.getElementById("chatbot-panel");
+    if (panel) panel.hidden = true;
+    if (groupSec && groupSec.lab && groupSec.lab.mode) leaveGroupSection("lab");
+  } else {
+    const tab = document.querySelector(".tab-btn.active")?.dataset.tab;
+    if (tab === "lab" && currentTopic && groupSec && groupSec.lab && !groupSec.lab.mode) enterGroupSection("lab", true);
+  }
+}
 function refreshUserChip() {
+  try { applyAiAvailability(); } catch (e) { /* abaikan */ }
   const nameEl = document.getElementById("user-chip-name");
   const modeEl = document.getElementById("user-chip-mode");
   if (!nameEl || !modeEl) return;
@@ -1041,8 +1088,11 @@ function switchTab(tabName) {
     showToast(tabLockToastMessage(currentTopic.id));
     return;
   }
+  const prevTab = document.querySelector(".tab-btn.active")?.dataset.tab;
   document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tabName));
   document.querySelectorAll(".tab-panel").forEach(p => p.classList.toggle("active", p.id === "panel-" + tabName));
+  if (prevTab && prevTab !== tabName && GROUP_TABS.includes(prevTab)) leaveGroupSection(prevTab);
+  if (GROUP_TABS.includes(tabName) && (tabName !== "lab" || aiAvailable())) enterGroupSection(tabName);
   if (currentTopic) {
     updateTopicProgressUI(tabName);
     renderNav(); // status gembok topik lain di sidebar bisa berubah (mis. topik ini baru selesai)
@@ -1128,6 +1178,9 @@ document.getElementById("progress-next-btn").addEventListener("click", () => {
   if (activeTab === "materi" && !alreadyPassed) {
     startMateriGate(() => {
       advanceProgress(currentTopic.id, activeIdx + 1);
+      // Eksperimen kelompok sudah disetujui guru sebelumnya -> langsung buka Latihan & Makerspace juga
+      const eg = getGateCacheEntry(currentTopic.id, "eksperimen");
+      if (eg && eg.status === "approved") advanceProgress(currentTopic.id, TAB_ORDER.length - 1);
       switchTab(TAB_ORDER[activeIdx + 1]);
     });
     return;
@@ -1136,6 +1189,11 @@ document.getElementById("progress-next-btn").addEventListener("click", () => {
   // dulu (dinilai otomatis), lalu dikirim ke guru untuk konfirmasi. Progress
   // BELUM maju di sini - baru maju lewat handleGateDecision() begitu guru
   // menyetujui (yang otomatis membuka Latihan Soal + Lab sekaligus).
+  if (activeTab === "eksperimen" && !alreadyPassed && inGroup() && !isGroupLeader()) {
+    showToast(t("group.member.eksnext", { leader: (getAccount() || {}).leaderName || "-" }));
+    checkGateOnTopicOpen(currentTopic.id);
+    return;
+  }
   if (activeTab === "eksperimen" && !alreadyPassed) {
     // Kalau topik ini punya tabel data interaktif, siswa WAJIB mengisi &
     // menyimpannya minimal sekali dulu sebelum pertanyaan konfirmasi
@@ -1271,6 +1329,7 @@ function wireEksVariantSwitcher(ex) {
     btn.addEventListener("click", () => {
       const key = btn.dataset.variant;
       if (key === currentEksVariantKey) return;
+      if (groupSec.eksperimen.mode === "member" || groupSec.eksperimen.mode === "blocked") { showToast(t("group.member.readonly")); return; }
       if (window.LKPD) LKPD.flush();
       currentEksVariantKey = key;
       saveEksVariant(key);
@@ -2434,7 +2493,8 @@ async function verifyExploreCode(code) {
   if (data.error) return { ok: false, error: data.error };
   if (data.kind !== "explore") return { ok: false, error: t("gate.guest.code.wrong") };
   localStorage.setItem(STORAGE_KEY_UNLOCK_ALL, "true");
-  setAccess("explore", data.token);
+  // Siswa yang memasukkan kode eksplorasi tetap memakai token akunnya.
+  if (getUserRole() === "student" && getAccount()) setAccess(null, null); else setAccess("explore", data.token);
   return { ok: true };
 }
 document.getElementById("unlock-code-btn").addEventListener("click", async () => {
@@ -2462,6 +2522,8 @@ function renderSettingsIdentity() {
   const rows = [];
   if (role === "student") {
     rows.push([t("field.fullname"), getStudentName()], [t("field.class"), getStudentClass()]);
+    const acc = getAccount();
+    if (acc && acc.groupName) rows.push([t("settings.identity.group"), acc.groupName], [t("settings.identity.leader"), (acc.leaderName || "-") + (acc.isLeader ? " (" + t("settings.identity.you") + ")" : "")]);
   }
   const kind = isInClassSession() ? "class" : (role === "guest" ? "explore" : (getAccessKind() || "self"));
   rows.push([t("settings.identity.mode"), kind === "class" ? t("header.chip.class", { code: classSession.code }) : t("header.chip." + kind)]);
@@ -2473,7 +2535,7 @@ function openSettingsModal() {
   renderSettingsIdentity();
   const studentDetails = document.getElementById("settings-student-info-details");
   const isStudent = getUserRole() === "student";
-  studentDetails.hidden = !isStudent;
+  studentDetails.hidden = true; // nama & kelas dikelola guru di Panel Guru
   document.getElementById("class-session-join-row").parentElement.hidden = !isStudent;
   if (isStudent) {
     document.getElementById("settings-student-name-input").value = getStudentName();
@@ -2482,6 +2544,7 @@ function openSettingsModal() {
   settingsModal.hidden = false;
 }
 document.getElementById("settings-btn").addEventListener("click", openSettingsModal);
+document.getElementById("lab-class-only-join-btn").addEventListener("click", openSettingsModal);
 document.getElementById("user-chip").addEventListener("click", openSettingsModal);
 document.getElementById("settings-close-btn").addEventListener("click", () => settingsModal.hidden = true);
 document.getElementById("settings-close-x").addEventListener("click", () => settingsModal.hidden = true);
@@ -2498,30 +2561,219 @@ document.getElementById("settings-student-info-save-btn").addEventListener("clic
 });
 document.getElementById("settings-reset-onboarding-btn").addEventListener("click", () => {
   if (!confirm(t("settings.resetonboarding.confirm"))) return;
-  [STORAGE_KEY_ROLE, STORAGE_KEY_STUDENT_NAME, STORAGE_KEY_STUDENT_CLASS, STORAGE_KEY_UNLOCK_ALL, STORAGE_KEY_TOKEN, STORAGE_KEY_ACCESS_KIND, STORAGE_KEY_CLASS_CODE].forEach(k => localStorage.removeItem(k));
-  classSession = null;
-  stopClassSync();
+  logoutStudent();
+  localStorage.removeItem(STORAGE_KEY_ROLE);
   settingsModal.hidden = true;
   location.reload();
 });
 
 /* ============================================================
+   Kerja kelompok: Eksperimen & Makerspace
+   ------------------------------------------------------------
+   - Ketua kelompok mengerjakan dari SATU perangkat: saat membuka tab,
+     perangkat meminta kunci (group_lock) lalu mengirim heartbeat tiap 30 s.
+     Kalau kunci dipegang perangkat lain, tampilan jadi baca-saja dengan
+     tombol "Pindahkan ke perangkat ini".
+   - Anggota melihat nama ketua + pratinjau baca-saja (LKPD & simulasi
+     kelompok) yang diperbarui otomatis (group_state, tiap 15 s).
+   ============================================================ */
+const GROUP_TABS = ["eksperimen", "lab"];
+const GROUP_HEARTBEAT_MS = 30000;
+const GROUP_POLL_MS = 15000;
+const groupSec = { eksperimen: { mode: null, hb: null, poll: null, n: 0, simAt: null }, lab: { mode: null, hb: null, poll: null, n: 0, simAt: null } };
+
+function storeAccountQuiet(acc) {
+  if (!acc) return;
+  localStorage.setItem(STORAGE_KEY_ACCOUNT, JSON.stringify(acc));
+}
+function stopGroupTimers(section) {
+  const g = groupSec[section];
+  if (g.hb) { clearInterval(g.hb); g.hb = null; }
+  if (g.poll) { clearInterval(g.poll); g.poll = null; }
+}
+async function enterGroupSection(section, force) {
+  const g = groupSec[section];
+  stopGroupTimers(section);
+  if (!currentTopic || currentTopic.status !== "ready" || !inGroup()) { setGroupMode(section, null); return; }
+  if (section === "lab" && !aiAvailable()) { setGroupMode(section, null); return; }
+  const acc = getAccount();
+  if (!acc.isLeader) { setGroupMode(section, "member"); startMemberPoll(section); return; }
+  let r;
+  try { r = await apiCall("group_lock", { topicId: currentTopic.id, section, action: "acquire" }); }
+  catch (e) { return; }
+  if (r.account) storeAccountQuiet(r.account);
+  if (r.ok) { setGroupMode(section, "leader"); startHeartbeat(section); }
+  else if (r.notLeader) { setGroupMode(section, "member"); startMemberPoll(section); }
+  else if (r.otherDevice) { setGroupMode(section, "blocked"); startMemberPoll(section); }
+  else if (r.error) showToast(r.error);
+}
+function leaveGroupSection(section) {
+  const g = groupSec[section];
+  stopGroupTimers(section);
+  if (g.mode === "leader" && currentTopic) apiCall("group_lock", { topicId: currentTopic.id, section, action: "release" }).catch(() => {});
+  g.mode = null;
+}
+function leaveAllGroupSections() { GROUP_TABS.forEach(leaveGroupSection); }
+function startHeartbeat(section) {
+  const g = groupSec[section];
+  g.hb = setInterval(async () => {
+    if (!currentTopic) return;
+    try {
+      const r = await apiCall("group_lock", { topicId: currentTopic.id, section, action: "heartbeat" });
+      if (r.ok === false && (r.otherDevice || r.notLeader)) {
+        stopGroupTimers(section);
+        setGroupMode(section, r.notLeader ? "member" : "blocked");
+        startMemberPoll(section);
+      }
+    } catch (e) { /* coba lagi */ }
+  }, GROUP_HEARTBEAT_MS);
+}
+function startMemberPoll(section) {
+  const g = groupSec[section];
+  g.n = 0;
+  const tick = async () => {
+    if (!currentTopic) return;
+    g.n++;
+    try {
+      const d = await apiCall("group_state", { topicId: currentTopic.id });
+      if (d.error) return;
+      if (d.account) {
+        storeAccountQuiet(d.account);
+        if (d.account.isLeader && g.mode === "member") { enterGroupSection(section, true); return; }
+      }
+      updateMemberView(section, d);
+      if (g.n % 2 === 1) checkGateOnTopicOpen(currentTopic.id);
+    } catch (e) { /* coba lagi */ }
+  };
+  tick();
+  g.poll = setInterval(tick, GROUP_POLL_MS);
+}
+async function takeoverGroupSection(section) {
+  if (!currentTopic) return;
+  let r;
+  try { r = await apiCall("group_lock", { topicId: currentTopic.id, section, action: "takeover" }); } catch (e) { return; }
+  if (r.ok) {
+    stopGroupTimers(section);
+    setGroupMode(section, "leader");
+    startHeartbeat(section);
+    if (section === "eksperimen" && window.LKPD) LKPD.refresh();
+    showToast(t("group.takeover.ok"));
+  } else if (r.error) showToast(r.error);
+}
+function groupBannerHTML(section, mode) {
+  const acc = getAccount() || {};
+  const grp = escapeHtmlQ(acc.groupName || "");
+  const leader = escapeHtmlQ(acc.leaderName || "");
+  const sec = t("tab." + (section === "lab" ? "lab" : "eksperimen"));
+  if (mode === "leader") return `<span class="gb-ic">★</span><div>${t("group.banner.leader", { group: grp, section: sec })}</div>`;
+  if (mode === "blocked") return `<span class="gb-ic">⇄</span><div>${t("group.banner.blocked", { section: sec })}<br><button type="button" class="btn btn-primary btn-small" data-group-takeover="${section}">${t("group.takeover.btn")}</button></div>`;
+  if (!acc.leaderName) return `<span class="gb-ic">!</span><div>${t("group.banner.noleader", { group: grp })}</div>`;
+  return `<span class="gb-ic">👥</span><div>${t("group.banner.member", { group: grp, leader, section: sec })}</div>`;
+}
+function ensureGroupBanner(section) {
+  const panel = document.getElementById("panel-" + section);
+  if (!panel) return null;
+  let el = document.getElementById("group-banner-" + section);
+  if (!el || !panel.contains(el)) {
+    el = document.createElement("div");
+    el.id = "group-banner-" + section;
+    el.className = "group-banner";
+    const label = panel.querySelector(".pjbl-stage-label");
+    if (label && label.parentElement === panel) label.after(el); else panel.prepend(el);
+  }
+  return el;
+}
+function setGroupMode(section, mode) {
+  const g = groupSec[section];
+  g.mode = mode;
+  const ro = mode === "member" || mode === "blocked";
+  const banner = ensureGroupBanner(section);
+  if (banner) {
+    banner.hidden = !mode;
+    banner.className = "group-banner" + (mode ? " gb-" + mode : "");
+    banner.innerHTML = mode ? groupBannerHTML(section, mode) : "";
+    const tk = banner.querySelector("[data-group-takeover]");
+    if (tk) tk.addEventListener("click", () => takeoverGroupSection(section));
+  }
+  if (section === "eksperimen") {
+    const panel = document.getElementById("panel-eksperimen");
+    panel.classList.toggle("group-readonly", ro);
+    if (window.LKPD && LKPD.isReadOnly() !== ro) {
+      LKPD.setReadOnly(ro);
+      const ex = currentTopic && currentTopic.eksperimen;
+      if (ex && ex.variants && currentEksVariantKey) renderEksVariantContent(ex, currentEksVariantKey);
+    }
+  } else {
+    const panel = document.getElementById("panel-lab");
+    panel.classList.toggle("group-readonly", ro);
+    panel.querySelectorAll(".lab-grid > .lab-card:not(.lab-preview-card)").forEach(el => { el.hidden = ro; });
+    const fu = document.getElementById("lab-edit-followup");
+    if (fu && ro) fu.hidden = true;
+    const refl = document.getElementById("lab-reflection-section");
+    if (refl) refl.hidden = ro || !(currentTopic && currentTopic.status === "ready");
+    let note = document.getElementById("group-lab-note");
+    if (ro) {
+      if (!note) {
+        note = document.createElement("p");
+        note.id = "group-lab-note";
+        note.className = "group-lab-note";
+        const card = panel.querySelector(".lab-preview-card h3");
+        if (card) card.after(note);
+      }
+      note.hidden = false;
+      if (!note.textContent) note.textContent = t("group.lab.waiting");
+    } else if (note) note.hidden = true;
+  }
+}
+function updateMemberView(section, d) {
+  const g = groupSec[section];
+  if (section === "eksperimen") {
+    const ex = currentTopic && currentTopic.eksperimen;
+    if (ex && ex.variants && d.lastVariant && ex.variants[d.lastVariant] && d.lastVariant !== currentEksVariantKey) {
+      currentEksVariantKey = d.lastVariant;
+      saveEksVariant(d.lastVariant);
+      document.querySelectorAll("#panel-eksperimen .eks-variant-btn").forEach(b => b.classList.toggle("active", b.dataset.variant === d.lastVariant));
+      renderEksVariantContent(ex, d.lastVariant);
+    } else if (window.LKPD) LKPD.refresh();
+  } else {
+    const note = document.getElementById("group-lab-note");
+    if (d.sim && d.sim.html && d.sim.createdAt !== g.simAt) {
+      g.simAt = d.sim.createdAt;
+      setPreview(stripCodeFence(d.sim.html));
+      document.getElementById("lab-edit-followup").hidden = true;
+      if (note) note.textContent = t("group.lab.lastprompt", { time: new Date(d.sim.createdAt).toLocaleTimeString(getLang() === "en" ? "en-GB" : "id-ID", { hour: "2-digit", minute: "2-digit" }) }) + " " + (d.sim.prompt || "").slice(0, 400);
+    } else if (!d.sim && note) note.textContent = t("group.lab.waiting");
+  }
+}
+// Perangkat ketua ditutup: lepaskan kunci supaya perangkat lain bisa langsung lanjut.
+window.addEventListener("pagehide", () => {
+  if (!currentTopic) return;
+  GROUP_TABS.forEach(section => {
+    if (groupSec[section].mode !== "leader") return;
+    try {
+      fetch(apiUrl("/api/backend"), { method: "POST", keepalive: true, headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(Object.assign({ mode: "group_lock", action: "release", topicId: currentTopic.id, section, lang: getLang() }, authFields())) });
+    } catch (e) { /* abaikan */ }
+  });
+});
+
+/* ============================================================
    Gerbang masuk (wajib)
    ------------------------------------------------------------
-   Siswa: peran -> nama + kelas -> kode akses (kode sesi kelas 6 huruf
-   ATAU kode belajar mandiri). Guru/validator: peran -> kode eksplorasi.
-   Semua kode diverifikasi server; hasilnya token akses 30 hari.
-   Langkah "API key" dari V7 sudah dihapus.
+   Siswa: peran -> login akun (nama + PIN dari guru) -> pilih "Belajar di
+   kelas" (kode sesi 6 huruf) atau "Belajar mandiri" (langsung masuk).
+   Guru -> Panel Guru. Validator -> Kode Eksplorasi.
+   Akun & kelompok dibuat guru di Panel Guru; server memberi token akun
+   30 hari yang berisi identitas siswa.
    ============================================================ */
-const GATE_STEPS = ["role", "student-info", "student-mode", "student-code", "guest-code"];
-// Pilihan siswa di langkah 3: "class" (kode sesi 6 huruf) atau "self" (kode belajar mandiri).
-let gateStudentMode = null;
+const GATE_STEPS = ["role", "student-login", "student-mode", "student-code", "guest-code"];
+let gateStudentMode = null; // "class" | "self" (pilihan di langkah 3)
 
 function computeGateStep() {
   const role = getUserRole();
   if (role === "student") {
-    if (!getStudentName() || !getStudentClass()) return "student-info";
-    if (!getAccessToken()) return gateStudentMode ? "student-code" : "student-mode";
+    if (!getAccessToken() || !getAccount()) return "student-login";
+    if (getAccessKind() === "pending") return gateStudentMode === "class" ? "student-code" : "student-mode";
     return null;
   }
   if (role === "guest") {
@@ -2535,10 +2787,6 @@ function showGateStep(step) {
     const el = document.getElementById("gate-step-" + s);
     if (el) el.hidden = (s !== step);
   });
-  if (step === "student-info") {
-    document.getElementById("gate-student-name-input").value = getStudentName();
-    document.getElementById("gate-student-class-input").value = getStudentClass();
-  }
   if (step === "student-code") applyStudentCodeMode();
   const focusEl = document.querySelector("#gate-step-" + step + " input");
   // Fokus otomatis hanya bila pengguna belum mengetik di kolom lain (jangan mencuri fokus).
@@ -2566,7 +2814,8 @@ async function initGate() {
   // reload di tengah sesi langsung kembali ke aktivitas kelas.
   if (getUserRole() === "student" && getJoinedSessionCode() && getAccessToken()) {
     try {
-      const data = await apiCall("session_sync", { code: getJoinedSessionCode(), studentId: getStudentId(), progress: getProgress() });
+      const data = await apiCall("session_sync", { code: getJoinedSessionCode(), progress: getProgress() });
+      if (!data.error && data.account) setAccount(data.account);
       if (!data.error && data.inSession) { classSession = data; mergeServerProgress(data.progress); updateQuizUI(data.activeQuiz); }
       else if (!data.error) { localStorage.removeItem(STORAGE_KEY_CLASS_CODE); if (getAccessKind() === "class") localStorage.setItem(STORAGE_KEY_ACCESS_KIND, "self"); }
     } catch (e) { /* offline: lanjut */ }
@@ -2574,46 +2823,77 @@ async function initGate() {
   applyGate();
 }
 
+// Keluar dari akun: hapus token, identitas, progres lokal, cache gate.
+function logoutStudent(message) {
+  [STORAGE_KEY_TOKEN, STORAGE_KEY_ACCESS_KIND, STORAGE_KEY_CLASS_CODE, STORAGE_KEY_ACCOUNT, STORAGE_KEY_STUDENT_NAME, STORAGE_KEY_STUDENT_CLASS,
+   STORAGE_KEY_PROGRESS, STORAGE_KEY_GATE_CACHE, STORAGE_KEY_EKSDATA_SAVED, STORAGE_KEY_UNLOCK_ALL].forEach(k => localStorage.removeItem(k));
+  classSession = null;
+  gateStudentMode = null;
+  stopClassSync();
+  leaveAllGroupSections();
+  if (message) showToast(message);
+}
+
 document.getElementById("gate-role-student-btn").addEventListener("click", () => {
   localStorage.setItem(STORAGE_KEY_ROLE, "student");
   applyGate();
 });
-// Teks langkah 4 mengikuti pilihan "Belajar di kelas" / "Belajar mandiri".
+document.getElementById("gate-login-back-btn").addEventListener("click", () => {
+  localStorage.removeItem(STORAGE_KEY_ROLE);
+  applyGate();
+});
+document.getElementById("gate-login-btn").addEventListener("click", async () => {
+  const nameEl = document.getElementById("gate-login-name-input"), pinEl = document.getElementById("gate-login-pin-input");
+  const status = document.getElementById("gate-login-status"), btn = document.getElementById("gate-login-btn");
+  const name = nameEl.value.trim().replace(/\s+/g, " "), pin = pinEl.value.replace(/\D/g, "");
+  if (!name || pin.length !== 6) { status.textContent = t("gate.login.needboth"); return; }
+  status.textContent = t("gate.student.code.connecting");
+  btn.disabled = true;
+  let data;
+  try { data = await apiCall("student_login", { name, pin }); }
+  catch (e) { data = { error: e.message }; }
+  btn.disabled = false;
+  if (data.error) { status.textContent = data.error; return; }
+  // Perangkat bersama: progres lokal milik akun lain tidak boleh terbawa.
+  const prev = getAccount();
+  if (!prev || prev.studentId !== data.account.studentId) {
+    [STORAGE_KEY_PROGRESS, STORAGE_KEY_GATE_CACHE, STORAGE_KEY_EKSDATA_SAVED, STORAGE_KEY_UNLOCK_ALL, STORAGE_KEY_CLASS_CODE].forEach(k => localStorage.removeItem(k));
+  }
+  setAccount(data.account);
+  setAccess("pending", data.token);
+  mergeServerProgress(data.progress);
+  nameEl.value = ""; pinEl.value = "";
+  status.textContent = "";
+  gateStudentMode = null;
+  applyGate();
+});
+["gate-login-name-input", "gate-login-pin-input"].forEach(id => document.getElementById(id).addEventListener("keydown", e => {
+  if (e.key === "Enter") document.getElementById("gate-login-btn").click();
+}));
+
+// Teks langkah kode mengikuti pilihan "Belajar di kelas".
 function applyStudentCodeMode() {
-  const m = gateStudentMode === "self" ? "self" : "class";
   const title = document.getElementById("gate-code-title"), desc = document.getElementById("gate-code-desc"), input = document.getElementById("gate-student-code-input");
-  title.setAttribute("data-i18n", "gate.code." + m + ".title"); title.textContent = t("gate.code." + m + ".title");
-  desc.setAttribute("data-i18n", "gate.code." + m + ".desc"); desc.textContent = t("gate.code." + m + ".desc");
-  input.setAttribute("data-i18n-placeholder", "gate.code." + m + ".placeholder"); input.placeholder = t("gate.code." + m + ".placeholder");
-  input.maxLength = m === "class" ? 12 : 60;
+  title.textContent = t("gate.code.class.title");
+  desc.textContent = t("gate.code.class.desc");
+  input.placeholder = t("gate.code.class.placeholder");
+  input.maxLength = 12;
   document.getElementById("gate-student-code-status").textContent = "";
 }
-["class", "self"].forEach(m => document.getElementById("gate-mode-" + m + "-btn").addEventListener("click", () => {
-  gateStudentMode = m;
+document.getElementById("gate-mode-class-btn").addEventListener("click", () => { gateStudentMode = "class"; applyGate(); });
+document.getElementById("gate-mode-self-btn").addEventListener("click", () => {
+  gateStudentMode = "self";
+  setAccess("self");
   applyGate();
-}));
-document.getElementById("gate-student-mode-back-btn").addEventListener("click", () => showGateStep("student-info"));
+  showToast(t("gate.welcome.self", { name: getStudentName() }));
+});
+document.getElementById("gate-student-mode-back-btn").addEventListener("click", () => {
+  logoutStudent();
+  localStorage.setItem(STORAGE_KEY_ROLE, "student");
+  applyGate();
+});
 document.getElementById("gate-role-guest-btn").addEventListener("click", () => {
   localStorage.setItem(STORAGE_KEY_ROLE, "guest");
-  applyGate();
-});
-
-document.getElementById("gate-student-info-btn").addEventListener("click", () => {
-  const name = document.getElementById("gate-student-name-input").value.trim().replace(/\s+/g, " ");
-  const cls = document.getElementById("gate-student-class-input").value.trim().replace(/\s+/g, " ");
-  const status = document.getElementById("gate-student-info-status");
-  if (!name || !cls) { status.textContent = t("gate.student.needinfo"); return; }
-  if (/[()]/.test(name + cls)) { status.textContent = t("gate.student.noparens"); return; }
-  localStorage.setItem(STORAGE_KEY_STUDENT_NAME, name);
-  localStorage.setItem(STORAGE_KEY_STUDENT_CLASS, cls);
-  status.textContent = "";
-  applyGate();
-});
-["gate-student-name-input", "gate-student-class-input"].forEach(id => document.getElementById(id).addEventListener("keydown", e => {
-  if (e.key === "Enter") document.getElementById("gate-student-info-btn").click();
-}));
-document.getElementById("gate-student-info-back-btn").addEventListener("click", () => {
-  localStorage.removeItem(STORAGE_KEY_ROLE);
   applyGate();
 });
 
@@ -2627,21 +2907,19 @@ document.getElementById("gate-student-code-btn").addEventListener("click", async
   status.classList.remove("ok");
   btn.disabled = true;
   let data;
-  try { data = await apiCall("verify_access", { code, studentId: getStudentId(), progress: getProgress() }); }
+  try { data = await apiCall("verify_access", { code, progress: getProgress() }); }
   catch (e) { data = { error: e.message }; }
   btn.disabled = false;
   if (data.error) { status.textContent = data.error; return; }
-  // Kode harus cocok dengan pilihan di langkah 3 (supaya siswa tidak salah mode).
-  const wanted = gateStudentMode === "self" ? "self" : "class";
-  if (data.kind !== wanted) { status.textContent = t(wanted === "class" ? "gate.code.notclass" : "gate.code.notself"); return; }
-  setAccess(data.kind, data.token);
+  if (data.kind !== "class") { status.textContent = t("gate.code.notclass2"); return; }
+  setAccess("class");
   mergeServerProgress(data.progress);
-  if (data.kind === "class") { localStorage.setItem(STORAGE_KEY_CLASS_CODE, data.session.code); classSession = data.session; }
-  if (data.kind === "explore") localStorage.setItem(STORAGE_KEY_UNLOCK_ALL, "true");
+  localStorage.setItem(STORAGE_KEY_CLASS_CODE, data.session.code);
+  classSession = data.session;
   input.value = "";
   status.textContent = "";
   applyGate();
-  showToast(t("gate.welcome." + data.kind, { name: getStudentName() }));
+  showToast(t("gate.welcome.class", { name: getStudentName() }));
 });
 document.getElementById("gate-student-code-input").addEventListener("keydown", (e) => {
   if (e.key === "Enter") document.getElementById("gate-student-code-btn").click();
@@ -2668,6 +2946,23 @@ document.getElementById("gate-guest-code-input").addEventListener("keydown", (e)
 document.getElementById("gate-guest-code-back-btn").addEventListener("click", () => {
   localStorage.removeItem(STORAGE_KEY_ROLE);
   applyGate();
+});
+
+// Token tidak berlaku lagi (PIN direset / akun dinonaktifkan): kembali ke login.
+window.addEventListener("emergent-api-code", (e) => {
+  const d = e.detail || {};
+  if (d.code === "AUTH" && getUserRole() === "student" && getAccessToken()) {
+    logoutStudent(d.error);
+    localStorage.setItem(STORAGE_KEY_ROLE, "student");
+    applyGate();
+  } else if (d.code === "CLASS_ONLY" && getUserRole() === "student") {
+    // Sesi kelas sudah berakhir di server: kembali ke mode mandiri.
+    if (getJoinedSessionCode()) leaveClassSession(); else applyAiAvailability();
+    showToast(t("classonly.toast"));
+  } else if ((d.code === "LOCKED" || d.code === "NOT_LEADER") && getUserRole() === "student") {
+    const tab = document.querySelector(".tab-btn.active")?.dataset.tab;
+    if (GROUP_TABS.includes(tab)) enterGroupSection(tab, true);
+  }
 });
 
 /* ---------------- Chatbot toggle ---------------- */

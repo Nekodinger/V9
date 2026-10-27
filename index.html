@@ -6,7 +6,8 @@
 <title>Emergent · AS &amp; A Level Physics 9702</title>
 <meta name="description" content="Platform belajar fisika berbasis Project Based Learning dan Generative AI untuk Cambridge International AS &amp; A Level Physics (9702).">
 <meta name="theme-color" content="#525FE1">
-<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="icon" type="image/png" href="assets/favicon-64.png">
+<link rel="apple-touch-icon" href="assets/logo-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
@@ -22,7 +23,7 @@
 <div id="onboarding-gate" class="onboarding-gate">
   <aside class="gate-aside">
     <div class="brand">
-      <img class="brand-mark" src="assets/logo-mark.svg" alt="" width="38" height="38">
+      <img class="brand-mark" src="assets/logo-96.png" alt="Logo Emergent" width="44" height="44">
       <span class="brand-text">
         <span class="brand-title">Emergent</span>
         <span class="brand-sub">AS &amp; A Level Physics · 9702</span>
@@ -31,7 +32,7 @@
     <h1 data-i18n-html="gate.aside.title">Belajar fisika dengan <em>bertanya</em>, mengukur, dan membangun.</h1>
     <p data-i18n="gate.aside.desc">Materi, eksperimen nyata, latihan soal, dan Makerspace tempat kamu membuat simulasi sendiri bersama AI.</p>
     <figure class="gate-mascot" aria-hidden="true">
-      <img src="assets/mascot.svg" alt="" width="300" height="300">
+      <img src="assets/hero-3d-640.webp" alt="" width="640" height="640">
       <div class="float-card"><span class="ic ic-indigo">31</span><div><b data-i18n="gate.float.k">Slide interaktif</b><small data-i18n="gate.float.v">Magnetic Fields</small></div></div>
     </figure>
     <div class="gate-foot"><span>PjBL · Generative AI</span><span>Magnetic Fields</span><a href="teacher.html" data-i18n="gate.teacherlink.short">Panel Guru</a></div>
@@ -46,14 +47,14 @@
     </div>
 
     <div id="gate-step-role" class="gate-step">
-      <p class="step-count" data-i18n="gate.step.1of4">Langkah 1 dari 4</p>
+      <p class="step-count" data-i18n="gate.step.1of3">Langkah 1 dari 3</p>
       <h2 data-i18n="gate.role.title2">Masuk sebagai siapa?</h2>
       <p class="muted" data-i18n="gate.role.desc2">Siswa masuk ke ruang belajar. Guru langsung menuju Panel Guru.</p>
       <div class="gate-role-options">
         <button type="button" id="gate-role-student-btn" class="gate-role-btn">
           <span class="role-num">01</span>
           <strong data-i18n="gate.role.student.title">Saya siswa</strong>
-          <span class="muted" data-i18n="gate.role.student.desc3">Isi nama dan kelas, lalu pilih belajar di kelas atau belajar mandiri.</span>
+          <span class="muted" data-i18n="gate.role.student.desc4">Masuk dengan nama dan PIN dari gurumu, lalu pilih belajar di kelas atau mandiri.</span>
         </button>
         <a href="teacher.html" id="gate-role-teacher-link" class="gate-role-btn">
           <span class="role-num">02</span>
@@ -64,23 +65,23 @@
       <p class="gate-teacher-link"><span data-i18n="gate.validator.text">Validator atau penguji?</span> <button type="button" id="gate-role-guest-btn" class="link-btn" data-i18n="gate.validator.btn">Masuk dengan Kode Eksplorasi</button></p>
     </div>
 
-    <div id="gate-step-student-info" class="gate-step" hidden>
-      <p class="step-count" data-i18n="gate.step.2of4">Langkah 2 dari 4</p>
-      <h2 data-i18n="gate.step3s.title2">Data diri singkat</h2>
-      <p class="muted" data-i18n="gate.step3s.desc">Supaya gurumu bisa mengenali progresmu di Panel Guru.</p>
+    <div id="gate-step-student-login" class="gate-step" hidden>
+      <p class="step-count" data-i18n="gate.step.2of3">Langkah 2 dari 3</p>
+      <h2 data-i18n="gate.login.title">Masuk dengan akunmu</h2>
+      <p class="muted" data-i18n="gate.login.desc">Akun dibuat gurumu. Ketik namamu dan PIN 6 angka yang tertulis di kartu login.</p>
       <label><span data-i18n="field.fullname">Nama lengkap</span>
-        <input type="text" id="gate-student-name-input" data-i18n-placeholder="field.fullname.placeholder" placeholder="Nama kamu" autocomplete="off" maxlength="60">
+        <input type="text" id="gate-login-name-input" data-i18n-placeholder="gate.login.name.placeholder" placeholder="Nama seperti di kartu login" autocomplete="username" maxlength="60">
       </label>
-      <label><span data-i18n="field.class">Kelas</span>
-        <input type="text" id="gate-student-class-input" data-i18n-placeholder="field.class.placeholder" placeholder="misal: XII IPA 1" autocomplete="off" maxlength="20">
+      <label><span data-i18n="field.pin">PIN</span>
+        <input type="password" id="gate-login-pin-input" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="6" data-i18n-placeholder="field.pin.placeholder" placeholder="6 angka" autocomplete="current-password">
       </label>
-      <button type="button" id="gate-student-info-btn" class="btn btn-primary" data-i18n="action.continue">Lanjut</button>
-      <p class="onboarding-status" id="gate-student-info-status"></p>
-      <p class="gate-back-row"><button type="button" id="gate-student-info-back-btn" class="link-btn" data-i18n="action.back">Kembali</button></p>
+      <button type="button" id="gate-login-btn" class="btn btn-primary" data-i18n="gate.login.btn">Masuk</button>
+      <p class="onboarding-status" id="gate-login-status"></p>
+      <p class="gate-back-row"><button type="button" id="gate-login-back-btn" class="link-btn" data-i18n="action.back">Kembali</button></p>
     </div>
 
     <div id="gate-step-student-mode" class="gate-step" hidden>
-      <p class="step-count" data-i18n="gate.step.3of4">Langkah 3 dari 4</p>
+      <p class="step-count" data-i18n="gate.step.3of3">Langkah 3 dari 3</p>
       <h2 data-i18n="gate.mode.title">Kamu belajar di mana?</h2>
       <p class="muted" data-i18n="gate.mode.desc">Pilih sesuai keadaanmu sekarang. Nanti bisa diganti di Pengaturan.</p>
       <div class="gate-role-options">
@@ -92,14 +93,14 @@
         <button type="button" id="gate-mode-self-btn" class="gate-role-btn">
           <span class="role-num">B</span>
           <strong data-i18n="gate.mode.self.title">Belajar mandiri</strong>
-          <span class="muted" data-i18n="gate.mode.self.desc">Belajar sendiri di rumah dengan kode belajar mandiri dari gurumu. Checkpoint tetap dikonfirmasi guru.</span>
+          <span class="muted" data-i18n="gate.mode.self.desc2">Belajar sendiri di rumah tanpa kode tambahan. Checkpoint tetap dikonfirmasi guru.</span>
         </button>
       </div>
-      <p class="gate-back-row"><button type="button" id="gate-student-mode-back-btn" class="link-btn" data-i18n="gate.student.code.back">Ubah nama/kelas</button></p>
+      <p class="gate-back-row"><button type="button" id="gate-student-mode-back-btn" class="link-btn" data-i18n="gate.mode.logout">Bukan akunmu? Keluar</button></p>
     </div>
 
     <div id="gate-step-student-code" class="gate-step" hidden>
-      <p class="step-count" data-i18n="gate.step.4of4">Langkah 4 dari 4</p>
+      <p class="step-count" data-i18n="gate.step.3of3">Langkah 3 dari 3</p>
       <h2 id="gate-code-title" data-i18n="gate.code.class.title">Masukkan kode sesi kelas</h2>
       <p class="muted" id="gate-code-desc" data-i18n="gate.code.class.desc">Kode 6 huruf yang tampil di layar gurumu.</p>
       <div class="key-input-row">
@@ -129,7 +130,7 @@
 <header class="site-header">
   <div class="header-inner">
     <button type="button" id="brand-home" class="brand" data-i18n-title="header.home.title" title="Kembali ke Beranda">
-      <img class="brand-mark" src="assets/logo-mark.svg" alt="" width="38" height="38">
+      <img class="brand-mark" src="assets/logo-96.png" alt="Logo Emergent" width="44" height="44">
       <span class="brand-text">
         <span class="brand-title">Emergent</span>
         <span class="brand-sub" data-i18n="header.brandsub2">AS &amp; A Level Physics · 9702</span>
@@ -177,7 +178,7 @@
         </div>
         <figure class="hero-figure">
           <span class="hero-blob" aria-hidden="true"></span>
-          <img src="assets/mascot-plain.svg" alt="" class="hero-mascot" width="420" height="420">
+          <img src="assets/hero-3d.webp" alt="" class="hero-mascot" width="960" height="960">
           <div class="float-card fc-1"><span class="ic ic-coral">AI</span><div><b data-i18n="hero.float1.k">Makerspace</b><small data-i18n="hero.float1.v">Simulasi buatanmu</small></div></div>
           <div class="float-card fc-2"><span class="ic ic-indigo">F</span><div><b>F = BIL</b><small data-i18n="hero.float2.v">LKPD neraca arus</small></div></div>
         </figure>
@@ -228,6 +229,11 @@
 
         <section id="panel-lab" class="tab-panel">
           <p class="pjbl-stage-label" data-i18n="pjbl.stage.lab"></p>
+          <div id="lab-class-only" class="class-only-note" hidden>
+            <h3 data-i18n="classonly.lab.title">Makerspace dikerjakan di kelas</h3>
+            <p data-i18n="classonly.lab.body">Makerspace memakai AI, jadi hanya terbuka saat belajar di kelas bersama guru. Saat mandiri, kamu tetap bisa mempelajari Materi, Eksperimen, dan Latihan Soal.</p>
+            <button type="button" id="lab-class-only-join-btn" class="btn btn-primary btn-small" data-i18n="classonly.join">Masukkan kode kelas</button>
+          </div>
           <div class="lab-grid">
             <div class="lab-card">
               <h3><span class="step-num">01</span> <span data-i18n="lab.card1.title">Generator Prompt Terstruktur</span></h3>
@@ -328,7 +334,7 @@
 <footer class="site-footer">
   <div class="footer-inner">
     <div class="footer-brand">
-      <div class="brand"><img class="brand-mark" src="assets/logo-mark.svg" alt="" width="38" height="38"><span class="brand-text"><span class="brand-title">Emergent</span></span></div>
+      <div class="brand"><img class="brand-mark" src="assets/logo-96.png" alt="Logo Emergent" width="44" height="44"><span class="brand-text"><span class="brand-title">Emergent</span></span></div>
       <p data-i18n="footer.tagline">Belajar fisika dengan bertanya, mengukur, dan membangun simulasi sendiri.</p>
     </div>
     <div>

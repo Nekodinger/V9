@@ -10,11 +10,14 @@ export default async function handler(req, res) {
   if (!originAllowed(req)) return sendJson(res, 403, { error: "Origin not allowed. Add it to ALLOWED_ORIGINS." });
   let body;
   try { body = await readJsonBody(req); } catch (e) { return sendJson(res, 400, { error: "Invalid JSON body." }); }
+  body = body && typeof body === "object" ? body : {};
+  // Alamat IP hanya dipakai pembatas percobaan login (tidak disimpan sebagai data siswa)
+  body._ip = String(req.headers["x-forwarded-for"] || (req.socket && req.socket.remoteAddress) || "").split(",")[0].trim();
   try {
-    const out = await dispatch(body || {});
+    const out = await dispatch(body);
     return sendJson(res, 200, out);
   } catch (e) {
-    if (e instanceof HttpError) return sendJson(res, e.status || 400, { error: e.message });
+    if (e instanceof HttpError) return sendJson(res, e.status || 400, e.code ? { error: e.message, code: e.code } : { error: e.message });
     if (e && e.code === "DATABASE_NOT_CONFIGURED") {
       return sendJson(res, 503, { error: body && body.lang === "en"
         ? "The database is not connected yet. Add DATABASE_URL (Supabase) in Vercel > Settings > Environment Variables, then redeploy."

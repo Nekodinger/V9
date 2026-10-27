@@ -60,15 +60,36 @@ async function step(name, fn) {
     await browser.close(); srv.kill(); process.exit(1);
   }
 }
-async function enterStudent(pg, name, cls, code, mode) {
-  await pg.goto(BASE + "/");
-  await pg.click("#gate-role-student-btn");
-  await pg.fill("#gate-student-name-input", name);
-  await pg.fill("#gate-student-class-input", cls);
-  await pg.click("#gate-student-info-btn");
-  await pg.click("#gate-mode-" + (mode || "self") + "-btn");
-  await pg.fill("#gate-student-code-input", code);
-  await pg.click("#gate-student-code-btn");
+// Akun dibuat guru lebih dulu (Panel Guru -> Siswa & Kelompok)
+const reg = await api({ mode: "teacher_accounts_add", controlCode: "guru-uji", lines: [
+  { name: "Rina Putri", className: "XII IPA 1", group: "Kelompok 1" },
+  { name: "Budi Santoso", className: "XII IPA 1", group: "Kelompok 1" }
+] });
+const PIN = Object.fromEntries(reg.created.map(c => [c.name, c.pin]));
+async function loginStudent(p, name, pin, mode) {
+  await p.goto(BASE + "/");
+  await p.click("#gate-role-student-btn");
+  await p.fill("#gate-login-name-input", name);
+  await p.fill("#gate-login-pin-input", pin);
+  await p.click("#gate-login-btn");
+  if (!mode) return;
+  await p.click("#gate-mode-" + mode + "-btn");
+}
+async function joinClassAtGate(p, code) {
+  await p.click("#gate-mode-class-btn");
+  await p.fill("#gate-student-code-input", code);
+  await p.click("#gate-student-code-btn");
+}
+let classCode = null;
+async function passMateri(p) {
+  // Dalam sesi kelas guru langsung membawa siswa ke topik (tanpa layar sambutan)
+  await p.waitForFunction(() => { const w = document.getElementById("welcome-start-btn"); return (w && w.offsetParent) || document.querySelector(".deck-slide"); });
+  if (await p.isVisible("#welcome-start-btn")) await p.click("#welcome-start-btn");
+  await p.waitForSelector(".deck-slide");
+  await p.click("#progress-next-btn");
+  const corr = await p.evaluate(() => currentTopic.materiCheck.map(q => q.correct));
+  for (let i = 0; i < corr.length; i++) await p.check(`#confirm-modal input[name="cq-${i}"][value="${corr[i]}"]`);
+  await p.click("#confirm-modal-submit-btn");
 }
 
 const pg = await newPage();
@@ -81,19 +102,19 @@ await step("no API-key UI anywhere; brand & logo present", async () => {
   assert.ok(await pg.isVisible("#gate-step-role"));
   await pg.screenshot({ path: path.join(SHOTS, "01-gate.png") });
 });
-await step("wrong code rejected, self-study code accepted", async () => {
+await step("account login (name + PIN), class code checked, self-study enters", async () => {
   assert.equal(await pg.getAttribute("#gate-role-teacher-link", "href"), "teacher.html");
-  // Mode "Belajar di kelas" menolak kode belajar mandiri, lalu ganti ke mode mandiri
-  await enterStudent(pg, "Rina Putri", "XII IPA 1", "mandiri-uji", "class");
-  await pg.waitForFunction(() => /bukan kode sesi kelas/i.test(document.getElementById("gate-student-code-status").textContent));
-  await pg.click("#gate-student-code-back-btn");
-  await pg.click("#gate-mode-self-btn");
-  assert.match(await pg.textContent("#gate-code-title"), /mandiri/i);
-  await pg.fill("#gate-student-code-input", "salah-kode");
+  await loginStudent(pg, "Rina Putri", "000000");
+  await pg.waitForFunction(() => /tidak cocok/i.test(document.getElementById("gate-login-status").textContent));
+  await pg.fill("#gate-login-pin-input", PIN["Rina Putri"]);
+  await pg.click("#gate-login-btn");
+  await pg.waitForSelector("#gate-step-student-mode:not([hidden])");
+  await pg.click("#gate-mode-class-btn");
+  await pg.fill("#gate-student-code-input", "SALAH1");
   await pg.click("#gate-student-code-btn");
   await pg.waitForFunction(() => /tidak valid/i.test(document.getElementById("gate-student-code-status").textContent));
-  await pg.fill("#gate-student-code-input", "mandiri-uji");
-  await pg.click("#gate-student-code-btn");
+  await pg.click("#gate-student-code-back-btn");
+  await pg.click("#gate-mode-self-btn");
   await pg.waitForSelector("#site-shell:not([hidden])");
   await pg.waitForFunction(() => document.getElementById("user-chip-mode").textContent.trim() !== "", null, { timeout: 10000 });
   assert.equal(await pg.textContent("#user-chip-mode"), "Mandiri");
@@ -129,6 +150,8 @@ await step("Materi gate: fail keeps modal open, pass unlocks Eksperimen", async 
   await pg.waitForSelector("#panel-eksperimen.active .lkpd");
 });
 await step("LKPD virtual: readings, graph, save, checks without leaking values, submit", async () => {
+  await pg.waitForSelector("#group-banner-eksperimen.gb-leader");
+  assert.match(await pg.textContent("#group-banner-eksperimen"), /ketua Kelompok 1/);
   await pg.click('.eks-variant-btn[data-variant="virtual"]');
   await pg.waitForSelector('.lkpd[data-mode="virtual"]');
   const I = ["0.5", "1", "1.5", "2", "2.5"];
@@ -162,7 +185,7 @@ await step("LKPD virtual: readings, graph, save, checks without leaking values, 
   assert.ok(await pg.isHidden('[data-model="conclusion"]'), "sample answer locked until student writes");
   await pg.fill('[data-open="conclusion"]', "F sebanding dengan I karena grafik lurus melalui titik asal; B sekitar 0,2 T.");
   await pg.fill('[data-open="virtual-vs-real"]', "Pemanasan kawat dan kawat menyentuh magnet tidak muncul pada alat virtual.");
-  await pg.fill("[data-group]", "3");
+  assert.match(await pg.textContent(".lkpd-identity"), /Kelompok 1/);
   const steps = await pg.locator(".lkpd [data-tick]").count();
   for (let i = 0; i < steps; i++) await pg.locator(".lkpd [data-tick]").nth(i).check();
   assert.equal(await pg.textContent(".lkpd-score-big"), "5/5");
@@ -179,7 +202,7 @@ await step("Eksperimen gate -> teacher approves -> Latihan & Makerspace unlock",
   await pg.click("#confirm-modal-submit-btn");
   await pg.waitForSelector("#eksperimen-gate-banner.gate-pending");
   const ro = await api({ mode: "teacher_roster", controlCode: "guru-uji" });
-  const req = ro.gatePending.find(g => g.studentId === "Rina Putri (XII IPA 1)");
+  const req = ro.gatePending.find(g => g.stage === "eksperimen" && g.label === "Kelompok 1 (XII IPA 1)");
   assert.ok(req && /5\/5/.test(req.summary), "gate summary includes LKPD score: " + (req && req.summary));
   await api({ mode: "teacher_gate_decide", controlCode: "guru-uji", topicId: req.topicId, studentId: req.studentId, stage: "eksperimen", decision: "approved" });
   await pg.waitForSelector("#eksperimen-gate-banner.gate-approved", { timeout: 15000 });
@@ -191,8 +214,26 @@ await step("Latihan answers are recorded", async () => {
   await pg.locator("[data-latihan-check]").first().click();
   await pg.waitForSelector(".latihan-fb:not([hidden])");
 });
-await step("Makerspace: streaming generate, edit, reflection to teacher", async () => {
+await step("Self-study: no AI (Tutor & Makerspace hidden, server refuses)", async () => {
   await pg.click('.tab-btn[data-tab="lab"]');
+  await pg.waitForSelector("#lab-class-only:not([hidden])");
+  assert.ok(await pg.isHidden("#generate-btn"), "generator hidden in self-study");
+  assert.ok(await pg.isHidden("#chatbot-toggle-btn"), "tutor hidden in self-study");
+  const r = await pg.evaluate(() => fetch("/api/ai", { method: "POST", headers: { "Content-Type": "text/plain" },
+    body: JSON.stringify(Object.assign({ mode: "chat", message: "halo", topicId: "magnetic-fields" }, authFields())) }).then(async x => ({ s: x.status, d: await x.json() })));
+  assert.equal(r.s, 403); assert.equal(r.d.code, "CLASS_ONLY");
+  await pg.screenshot({ path: path.join(SHOTS, "16-self-no-ai.png") });
+});
+await step("Makerspace: streaming generate, edit, reflection to teacher", async () => {
+  const s = await api({ mode: "teacher_session", controlCode: "guru-uji", action: "start", topicId: "magnetic-fields", tabIndex: 0 });
+  classCode = s.state.code;
+  await pg.click("#lab-class-only-join-btn");
+  await pg.fill("#class-session-code-input", classCode);
+  await pg.click("#class-session-join-btn");
+  await pg.waitForFunction(() => /Kelas/.test(document.getElementById("user-chip-mode").textContent));
+  await pg.click("#settings-close-btn");
+  await pg.click('.tab-btn[data-tab="lab"]');
+  await pg.waitForSelector("#lab-class-only", { state: "hidden" });
   await pg.fill("#pf-goal", "mengamati hubungan arus dan gaya pada kawat");
   await pg.click("#pf-build-btn");
   await pg.click("#generate-btn");
@@ -216,6 +257,54 @@ await step("Makerspace: streaming generate, edit, reflection to teacher", async 
   await pg.locator(".lab-grid").scrollIntoViewIfNeeded();
   await pg.screenshot({ path: path.join(SHOTS, "05-makerspace.png") });
 });
+await step("Group member: leader name + read-only LKPD & simulation on own device", async () => {
+  const bp = await newPage();
+  await bp.addInitScript(() => { Math.random = () => 0.9999; });
+  await loginStudent(bp, "Budi", PIN["Budi Santoso"]);
+  await bp.waitForSelector("#gate-step-student-mode:not([hidden])");
+  await joinClassAtGate(bp, classCode);
+  await bp.waitForSelector("#site-shell:not([hidden])");
+  await passMateri(bp);
+  await bp.waitForSelector("#group-banner-eksperimen.gb-member");
+  assert.match(await bp.textContent("#group-banner-eksperimen"), /Rina Putri/);
+  await bp.waitForFunction(() => document.querySelector(".lkpd-score-big") && document.querySelector(".lkpd-score-big").textContent === "5/5", null, { timeout: 20000 });
+  assert.ok(await bp.locator(".lkpd.lkpd-readonly").count() === 1);
+  assert.ok(await bp.locator('.lkpd [data-open="conclusion"]').isDisabled());
+  assert.ok(await bp.isHidden('.lkpd [data-act="submit"]'));
+  await bp.click('.eks-variant-btn[data-variant="laboratorium"]');
+  assert.equal(await bp.getAttribute('.eks-variant-btn[data-variant="virtual"]', "class"), "eks-variant-btn active", "member cannot switch variant");
+  await bp.screenshot({ path: path.join(SHOTS, "13-member-eksperimen.png") });
+  // Eksperimen kelompok sudah disetujui guru -> Latihan & Makerspace anggota ikut terbuka
+  await bp.waitForFunction(() => !document.querySelector('.tab-btn[data-tab="lab"]').classList.contains("locked"), null, { timeout: 20000 });
+  await bp.click('.tab-btn[data-tab="lab"]');
+  await bp.waitForSelector("#group-banner-lab.gb-member");
+  assert.ok(await bp.isHidden("#generate-btn"), "member cannot generate");
+  await bp.waitForFunction(() => (document.getElementById("preview-frame").getAttribute("srcdoc") || "").includes("</html>"), null, { timeout: 20000 });
+  assert.match(await bp.textContent("#group-lab-note"), /tambahkan label satuan/);
+  assert.ok(await bp.isHidden("#lab-reflection-section"));
+  await bp.screenshot({ path: path.join(SHOTS, "14-member-lab.png") });
+  await bp.close();
+});
+await step("Leader on a second device: read-only until moved, then takes over", async () => {
+  const rp = await newPage();
+  await loginStudent(rp, "Rina Putri", PIN["Rina Putri"]);
+  await rp.waitForSelector("#gate-step-student-mode:not([hidden])");
+  await joinClassAtGate(rp, classCode);
+  await rp.waitForSelector("#site-shell:not([hidden])");
+  await rp.waitForFunction(() => { const w = document.getElementById("welcome-start-btn"); return (w && w.offsetParent) || document.querySelector(".deck-slide"); });
+  if (await rp.isVisible("#welcome-start-btn")) await rp.click("#welcome-start-btn");
+  await rp.waitForFunction(() => !document.querySelector('.tab-btn[data-tab="lab"]').classList.contains("locked"), null, { timeout: 20000 });
+  await rp.click('.tab-btn[data-tab="lab"]');
+  await rp.waitForSelector("#group-banner-lab.gb-blocked");
+  assert.ok(await rp.isHidden("#generate-btn"));
+  await rp.click("[data-group-takeover]");
+  await rp.waitForSelector("#group-banner-lab.gb-leader");
+  assert.ok(await rp.isVisible("#generate-btn"));
+  await rp.close();
+  // perangkat pertama sekarang ditolak server saat menulis
+  const r = await pg.evaluate(() => apiCall("lkpd_save", { topicId: "magnetic-fields", lkpdMode: "virtual", data: {}, progress: 0 }));
+  assert.equal(r._status, 409);
+});
 await step("Tutor chat streams a reply", async () => {
   await pg.click("#chatbot-toggle-btn");
   await pg.fill("#chatbot-input", "Kenapa F = BIL?");
@@ -223,6 +312,11 @@ await step("Tutor chat streams a reply", async () => {
   await pg.waitForFunction(() => /Pertanyaan bagus/.test(document.getElementById("chatbot-messages").textContent));
   await pg.screenshot({ path: path.join(SHOTS, "06-chat.png") });
   await pg.click("#chatbot-close-btn");
+  // Sesi kelas berakhir -> kembali mandiri, AI mati lagi
+  await api({ mode: "teacher_session", controlCode: "guru-uji", action: "end" });
+  await pg.evaluate(() => syncClassSession());
+  await pg.waitForFunction(() => document.getElementById("user-chip-mode").textContent === "Mandiri");
+  assert.ok(await pg.isHidden("#chatbot-toggle-btn"));
 });
 await step("Class session: join, quiz, session end keeps student inside (V7 bug fixed)", async () => {
   const s = await api({ mode: "teacher_session", controlCode: "guru-uji", action: "start", topicId: "magnetic-fields", tabIndex: 0 });
@@ -258,6 +352,29 @@ await step("Teacher panel: records, detail with LKPD answers, Excel & PDF export
   const topicOpts = await tp.$$eval("#teacher-topic-select option, #quiz-topic-select option", os => os.map(o => o.value));
   assert.ok(topicOpts.length >= 2 && topicOpts.every(v => v === "magnetic-fields"), "teacher topic lists: " + topicOpts.join(","));
   await tp.screenshot({ path: path.join(SHOTS, "07-teacher-session.png") });
+  await tp.click('.t-tab[data-pane="accounts"]');
+  await tp.waitForSelector(".acc-group");
+  assert.match(await tp.textContent("#acc-groups"), /Kelompok 1/);
+  assert.equal(await tp.locator(".acc-pin").first().textContent(), "••••••", "PINs hidden by default");
+  await tp.check("#acc-show-pin");
+  assert.match(await tp.textContent("#acc-groups"), new RegExp(PIN["Budi Santoso"]));
+  assert.equal(await tp.$eval('[data-group-leader]', el => el.selectedOptions[0].textContent), "Rina Putri");
+  await tp.fill("#acc-add-class", "XII IPA 2");
+  await tp.fill("#acc-add-lines", "Sari Dewi; Kelompok A\nDoni\tKelompok A");
+  await tp.click("#acc-add-btn");
+  await tp.waitForFunction(() => /2 siswa terdaftar/.test(document.getElementById("acc-add-status").textContent));
+  await tp.waitForFunction(() => /Kelompok A/.test(document.getElementById("acc-groups").textContent));
+  const [pop] = await Promise.all([tp.waitForEvent("popup"), tp.click("#acc-print-btn")]);
+  await pop.waitForLoadState();
+  assert.equal(await pop.locator(".card").count(), 2, "cards for the filtered class");
+  assert.match(await pop.textContent("body"), /Sari Dewi/);
+  await pop.close();
+  const [dA] = await Promise.all([tp.waitForEvent("download"), tp.click("#acc-xlsx-btn")]);
+  const aPath = path.join(SHOTS, "akun.xlsx"); await dA.saveAs(aPath);
+  const accRows = require("xlsx").utils.sheet_to_json(require("xlsx").readFile(aPath).Sheets["Akun siswa"]);
+  assert.equal(accRows.length, 2); assert.match(String(accRows[0].PIN), /^\d{6}$/);
+  await tp.selectOption("#acc-class-filter", "");
+  await tp.screenshot({ path: path.join(SHOTS, "15-teacher-accounts.png") });
   await tp.click('.t-tab[data-pane="records"]');
   await tp.waitForSelector("#records-body .student-link");
   const rowText = await tp.textContent("#records-body");

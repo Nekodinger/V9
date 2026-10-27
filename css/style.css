@@ -171,7 +171,7 @@ input[type=radio], input[type=checkbox] { accent-color: var(--indigo); width: 17
 
 /* ---------- Brand ---------- */
 .brand { display: flex; align-items: center; gap: 12px; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; color: inherit; }
-.brand-mark { width: 44px; height: 44px; display: block; flex: none; }
+.brand-mark { width: 44px; height: 44px; display: block; flex: none; border-radius: 50%; }
 .brand-text { display: flex; flex-direction: column; gap: 2px; }
 .brand-title { font-family: var(--head); font-size: 27px; font-weight: 700; letter-spacing: -0.01em; line-height: 1; color: var(--navy); }
 .brand-title em { font-style: normal; color: var(--indigo); }
@@ -184,8 +184,9 @@ input[type=radio], input[type=checkbox] { accent-color: var(--indigo); width: 17
 .gate-aside h1 { font-size: clamp(38px, 4.2vw, 56px); line-height: 1.15; font-weight: 700; margin: 10px 0 0; max-width: 15ch; }
 .gate-aside h1 em { color: var(--indigo); font-style: normal; }
 .gate-aside p { color: var(--body); max-width: 44ch; margin: 0; font-size: 17px; }
-.gate-mascot { position: relative; margin: 6px 0 0; width: min(340px, 80%); }
-.gate-mascot img { width: 100%; height: auto; display: block; filter: drop-shadow(0 18px 30px rgba(82, 95, 225, .12)); }
+.gate-mascot { position: relative; isolation: isolate; margin: 6px 0 0; width: min(360px, 78%); }
+.gate-mascot img { width: 100%; height: auto; display: block; border-radius: 28px; box-shadow: 0 24px 50px rgba(11, 16, 74, .14); }
+.gate-mascot::before { content: ""; position: absolute; left: -18px; bottom: -18px; width: 74px; height: 74px; border-radius: 50%; border: 12px solid var(--coral); z-index: -1; }
 .gate-mascot .float-card { position: absolute; right: -40%; bottom: 22%; }
 .gate-aside .gate-foot { margin-top: auto; font-size: 14px; color: var(--muted); display: flex; gap: 22px; flex-wrap: wrap; position: relative; }
 .gate-aside .gate-foot a { color: var(--indigo); font-weight: 500; }
@@ -280,7 +281,7 @@ body.nav-pinned .nav-toggle svg { transform: rotate(180deg); }
 .hero-blob { position: absolute; width: 78%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #FFFFFF 0%, #EEF0FF 60%, #E3E6FF 100%); box-shadow: inset 0 0 0 14px rgba(255, 255, 255, .6); }
 .hero-blob::before { content: ""; position: absolute; left: -6%; bottom: 8%; width: 74px; height: 74px; border-radius: 50%; border: 12px solid var(--coral); box-sizing: border-box; }
 .hero-blob::after { content: ""; position: absolute; right: 4%; top: 6%; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--indigo); }
-.hero-mascot { position: relative; width: min(420px, 92%); height: auto; filter: drop-shadow(0 22px 34px rgba(82, 95, 225, .16)); }
+.hero-mascot { position: relative; width: min(440px, 88%); height: auto; border-radius: 32px; box-shadow: 0 28px 60px rgba(11, 16, 74, .16); }
 .hero-figure .float-card { position: absolute; }
 .hero-figure .fc-1 { right: -2%; top: 56%; }
 .hero-figure .fc-2 { left: -4%; top: 14%; }
@@ -382,6 +383,19 @@ body.nav-pinned .nav-toggle svg { transform: rotate(180deg); }
 .gate-retry-btn { margin-top: 10px; }
 .teacher-note { font-size: 14.5px; color: var(--body); margin: 10px 0 0; }
 .gate-score-fail { color: var(--coral-ink); font-weight: 600; }
+
+/* ---------- Kerja kelompok (ketua / anggota) ---------- */
+.group-banner { display: flex; gap: 14px; align-items: flex-start; padding: 14px 18px; margin: 0 0 20px; border-radius: var(--radius-md); border: 1px solid var(--line-2); background: var(--indigo-mist); font-size: 15px; color: var(--navy); }
+.group-banner .gb-ic { flex: none; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: var(--white); font-size: 18px; box-shadow: var(--shadow); }
+.group-banner .btn { margin-top: 10px; }
+.group-banner.gb-leader { background: var(--ok-soft); border-color: #BFE6D2; }
+.group-banner.gb-member { background: var(--indigo-mist); border-color: var(--indigo-soft); }
+.group-banner.gb-blocked { background: var(--warn-soft); border-color: #F3D39A; }
+.group-readonly .eks-variant-btn:not(.active) { opacity: .55; }
+.lkpd-readonly .lkpd-body input, .lkpd-readonly .lkpd-body textarea, .lkpd-readonly .lkpd-body select { background: var(--bg-soft); color: var(--navy); opacity: 1; -webkit-text-fill-color: var(--navy); }
+.lkpd-readonly .lkpd-foot .lkpd-save-state { color: var(--indigo-deep); font-weight: 600; }
+.group-lab-note { background: var(--indigo-mist); border-radius: 10px; padding: 10px 14px; font-size: 14.5px; color: var(--navy); margin: 0 0 12px; white-space: pre-wrap; }
+.pin-input { letter-spacing: .5em; font-size: 20px !important; font-weight: 700; max-width: 220px; }
 
 /* ---------- Eksperimen: switcher, tabel, virtual lab ---------- */
 .eks-variant-switcher { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 0 0 28px; }
@@ -647,7 +661,7 @@ body.teacher-shell .site-footer { margin-top: 60px; }
 .teacher-login { max-width: 480px; margin: 8vh auto; background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-3); padding: 34px 34px 28px; position: relative; }
 .teacher-login::before { content: ""; position: absolute; inset: -60px -120px auto auto; width: 260px; height: 260px; border-radius: 50%; background: radial-gradient(circle, #E9E7FF 0%, rgba(233, 231, 255, 0) 70%); z-index: -1; }
 .teacher-login h2 { font-size: 30px; }
-.t-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line-2); border-radius: 6px; overflow: hidden; margin: 0 0 26px; background: var(--white); box-shadow: var(--shadow); }
+.t-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 1px solid var(--line-2); border-radius: 6px; overflow: hidden; margin: 0 0 26px; background: var(--white); box-shadow: var(--shadow); }
 .t-tab { background: var(--white); border: 0; padding: 15px 14px; font: 600 15px var(--head); color: var(--navy); cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background .2s, color .2s; }
 .t-tab + .t-tab { border-left: 1px solid var(--line-2); }
 .t-tab .tab-num { font-family: var(--head); font-weight: 600; font-size: 12.5px; width: 26px; height: 26px; border-radius: 50%; display: inline-grid; place-items: center; color: var(--indigo-deep); background: var(--indigo-soft); margin-right: 0; }
@@ -727,6 +741,26 @@ body.teacher-shell .site-footer { margin-top: 60px; }
 .quiz-results-table th, .quiz-results-table td { border: 1px solid var(--line-2); padding: 8px 10px; text-align: left; vertical-align: top; }
 .quiz-results-table th { background: var(--indigo-mist); font-family: var(--head); font-weight: 600; color: var(--navy); }
 
+/* ---------- Panel Guru: Siswa & Kelompok ---------- */
+.acc-howto { padding-left: 20px; margin: 0; display: grid; gap: 6px; }
+.acc-showpin { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 14px; }
+.acc-class + .acc-class { margin-top: 26px; }
+.acc-class-title { font-size: 19px; margin: 6px 0 12px; }
+.acc-group { border: 1px solid var(--line); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 14px; background: var(--white); }
+.acc-group.acc-lone { background: var(--bg-soft); }
+.acc-group-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.acc-group-head h4 { margin: 0; font-size: 18px; }
+.acc-leader { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; }
+.acc-leader select { width: auto; margin: 0; padding: 7px 10px; }
+.acc-lock { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 8px 0 10px; color: var(--muted); }
+.acc-lock.on { color: var(--navy); }
+.acc-lock .link-btn { margin-left: auto; color: var(--coral-ink); }
+.acc-actions { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.acc-actions select { width: auto; margin: 0; padding: 6px 8px; font-size: 13.5px; max-width: 170px; }
+.acc-actions .btn-small { padding: 6px 9px; font-size: 13px; }
+.acc-pin { font-family: var(--mono); letter-spacing: .12em; font-weight: 700; color: var(--indigo-deep); }
+tr.acc-inactive td { opacity: .55; }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1180px) {
   .gate-mascot .float-card { right: -22%; }
@@ -743,7 +777,9 @@ body.teacher-shell .site-footer { margin-top: 60px; }
   .onboarding-gate { grid-template-columns: 1fr; }
   .gate-aside { padding: 26px 20px 8px; gap: 14px; }
   .gate-aside h1 { font-size: 32px; }
-  .gate-mascot { width: 150px; position: absolute; right: 6px; top: 78px; }
+  .gate-mascot { width: 130px; position: absolute; right: 12px; top: 78px; }
+  .gate-mascot img { border-radius: 18px; }
+  .gate-mascot::before { display: none; }
   .gate-mascot .float-card, .gate-aside .gate-foot { display: none; }
   .gate-aside h1, .gate-aside p { max-width: calc(100% - 150px); }
   .gate-main { padding: 12px 16px 40px; }
@@ -753,7 +789,7 @@ body.teacher-shell .site-footer { margin-top: 60px; }
   .topic-nav { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--line); }
   .welcome-hero { grid-template-columns: 1fr; padding-top: 32px; padding-bottom: 80px; }
   .hero-figure { min-height: 260px; }
-  .hero-mascot { width: 240px; }
+  .hero-mascot { width: 260px; border-radius: 24px; }
   .hero-figure .float-card { display: none; }
   .stage-strip { grid-template-columns: 1fr; margin-top: -48px; }
   .welcome-note { grid-template-columns: 1fr; }
@@ -794,3 +830,10 @@ body.teacher-shell .site-footer { margin-top: 60px; }
   .lkpd-sec { break-inside: avoid; }
   textarea { border: 1px solid #999; }
 }
+
+/* Mode mandiri: AI (Tutor Fisika & Makerspace) nonaktif */
+.class-only-note { margin: 18px 0 8px; padding: 26px 28px; border: 1px dashed var(--line-2); border-radius: 14px; background: var(--white); }
+.class-only-note h3 { margin: 0 0 8px; }
+.class-only-note p { margin: 0 0 16px; color: var(--muted, #5b6275); max-width: 70ch; }
+#panel-lab.ai-off > :not(.pjbl-stage-label):not(#lab-class-only) { display: none !important; }
+body.ai-off #chatbot-toggle-btn, body.ai-off #chatbot-panel { display: none !important; }

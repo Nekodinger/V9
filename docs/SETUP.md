@@ -53,7 +53,7 @@ Buka proyek Vercel → **Settings → Environment Variables**, tambahkan (centan
 | --- | --- | --- |
 | `ANTHROPIC_API_KEY` | ya | API key dari <https://console.anthropic.com/settings/keys> (diawali `sk-ant-`) |
 | `TEACHER_CONTROL_CODE` | ya | Kode masuk Panel Guru. Buat sendiri, minimal 12 karakter, jangan dibagikan ke siswa |
-| `SELF_STUDY_CODE` | disarankan | Kode belajar mandiri untuk siswa (default `belajar-mandiri`; sebaiknya diganti) |
+| `SELF_STUDY_CODE` | tidak dipakai lagi | Belajar mandiri kini cukup dengan akun siswa (nama + PIN); variabel ini boleh dihapus |
 | `EXPLORE_CODE` | opsional | Kode eksplorasi untuk validator/guru tamu: semua tab terbuka tanpa urutan |
 | `DATABASE_URL` | ya, bila pakai Cara B | URI transaction pooler Supabase |
 | `ALLOWED_ORIGINS` | opsional | Hanya bila situs juga dibuka dari domain lain, mis. `https://nekodinger.github.io` |

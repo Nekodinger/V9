@@ -23,6 +23,7 @@ window.TeacherExport = (function () {
   function recapRows(summaries) {
     return summaries.map(s => ({
       [t("teacher.rec.student")]: s.name, [t("teacher.rec.class")]: s.className,
+      [t("teacher.rec.group")]: (s.groupName || "") + (s.isLeader ? " (" + t("teacher.rec.leader") + ")" : ""),
       [t("teacher.rec.stage")]: tab(s.stageIndex),
       [t("teacher.rec.slides") + " (%)"]: pctv(s.slidesPct),
       [t("teacher.rec.materi") + " (%)"]: pctv(s.materiBest), [t("teacher.xl.materitries")]: s.materiTries,
