@@ -152,8 +152,39 @@ await step("Materi gate: fail keeps modal open, pass unlocks Eksperimen", async 
 await step("LKPD virtual: readings, graph, save, checks without leaking values, submit", async () => {
   await pg.waitForSelector("#group-banner-eksperimen.gb-leader");
   assert.match(await pg.textContent("#group-banner-eksperimen"), /ketua Kelompok 1/);
+  // Alat Sederhana & Lab: tabel No | Alat | Jumlah | Gambar
+  await pg.click('.eks-variant-btn[data-variant="sederhana"]');
+  await pg.waitForSelector(".lkpd-mat-table");
+  assert.equal(await pg.locator(".lkpd-mat-table tbody tr").count(), 10);
+  assert.ok((await pg.getAttribute(".lkpd-mat-table img", "src")).startsWith("https://thumb.wikimedia.org/"));
+  assert.match(await pg.textContent(".lkpd-mat-credit"), /Wikimedia Commons/);
+  await pg.locator(".lkpd-mat-table").scrollIntoViewIfNeeded();
+  await pg.screenshot({ path: path.join(SHOTS, "18-materials-simple.png") });
+  await pg.click('.eks-variant-btn[data-variant="laboratorium"]');
+  await pg.waitForFunction(() => document.querySelectorAll(".lkpd-mat-table tbody tr").length === 7);
+  assert.equal(await pg.locator(".lkpd-mat-svg svg").count(), 1, "current balance row shows the set-up illustration");
   await pg.click('.eks-variant-btn[data-variant="virtual"]');
   await pg.waitForSelector('.lkpd[data-mode="virtual"]');
+  // Rakit alat dulu: kontrol pengukuran tersembunyi, urutan salah diberi petunjuk
+  assert.ok(await pg.isHidden('[data-act="vlab-read"]'), "measuring locked until assembled");
+  await pg.click('[data-asm-part="ammeter"]');
+  assert.match(await pg.textContent("[data-asm-msg]"), /neraca elektronik harus diletakkan dulu/);
+  await pg.click('[data-asm-part="balance"]');
+  // seret magnet ke meja kerja (pointer drag)
+  const mg = await pg.locator('[data-asm-part="magnets"]').boundingBox();
+  const bench = await pg.locator("[data-asm-drop]").boundingBox();
+  await pg.mouse.move(mg.x + mg.width / 2, mg.y + mg.height / 2);
+  await pg.mouse.down();
+  await pg.mouse.move(bench.x + bench.width / 2, bench.y + bench.height / 2, { steps: 8 });
+  await pg.mouse.up();
+  await pg.waitForFunction(() => LKPD._ctx().st.asm === 2);
+  assert.match(await pg.textContent("#vlab-balance-display"), /41,37 g/, "balance shows magnet mass before tare");
+  await pg.locator("[data-asm]").scrollIntoViewIfNeeded();
+  await pg.screenshot({ path: path.join(SHOTS, "17-assemble.png") });
+  for (const part of ["tare", "wire", "ammeter", "supply", "leads"]) await pg.click(`[data-asm-part="${part}"]`);
+  assert.match(await pg.textContent("[data-asm-msg]"), /Rangkaian lengkap/);
+  assert.match(await pg.textContent("#vlab-balance-display"), /0,00 g/);
+  assert.ok(await pg.isVisible('[data-act="vlab-read"]'));
   const I = ["0.5", "1", "1.5", "2", "2.5"];
   for (let k = 0; k < 15; k++) {
     await pg.selectOption("[data-vlab-i]", I[Math.floor(k / 3)]);
@@ -374,6 +405,24 @@ await step("Teacher panel: records, detail with LKPD answers, Excel & PDF export
   const accRows = require("xlsx").utils.sheet_to_json(require("xlsx").readFile(aPath).Sheets["Akun siswa"]);
   assert.equal(accRows.length, 2); assert.match(String(accRows[0].PIN), /^\d{6}$/);
   await tp.selectOption("#acc-class-filter", "");
+  // Pilih banyak: centang satu kelompok -> pindah kelas; lalu hapus satu siswa
+  tp.on("dialog", d => d.accept());
+  const gA = await tp.evaluate(() => accCache.groups.find(g => g.name === "Kelompok A").groupId);
+  await tp.check(`[data-acc-selgroup="${gA}"]`);
+  await tp.waitForFunction(() => /2 dipilih/.test(document.getElementById("acc-bulk-count").textContent));
+  await tp.selectOption("#acc-bulk-action", "class");
+  await tp.fill("#acc-bulk-class", "XII IPA 3");
+  await tp.fill("#acc-bulk-group", "Kelompok B");
+  await tp.screenshot({ path: path.join(SHOTS, "19-bulk-select.png") });
+  await tp.click("#acc-bulk-apply");
+  await tp.waitForFunction(() => /2 siswa dipindahkan/.test(document.getElementById("acc-status").textContent));
+  const moved = await tp.evaluate(() => accCache.accounts.filter(a => a.className === "XII IPA 3").map(a => a.studentId).sort());
+  assert.deepEqual(moved, ["Doni (XII IPA 3)", "Sari Dewi (XII IPA 3)"]);
+  await tp.check('[data-acc-sel="Doni (XII IPA 3)"]');
+  await tp.selectOption("#acc-bulk-action", "delete");
+  await tp.click("#acc-bulk-apply");
+  await tp.waitForFunction(() => /1 siswa dihapus/.test(document.getElementById("acc-status").textContent));
+  assert.ok(!(await tp.evaluate(() => accCache.accounts.some(a => a.name === "Doni"))));
   await tp.screenshot({ path: path.join(SHOTS, "15-teacher-accounts.png") });
   await tp.click('.t-tab[data-pane="records"]');
   await tp.waitForSelector("#records-body .student-link");

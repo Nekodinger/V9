@@ -481,7 +481,7 @@ async function loadUsage() {
   const data = await callBackend("teacher_usage");
   if (data.error) { body.innerHTML = `<p class="teacher-note">${escapeHtml(data.error)}</p>`; return; }
   const kinds = ["chat", "simulate", "edit", "datacheck", "quiz"];
-  body.innerHTML = `<p class="small">${t("teacher.usage.models", { chat: data.models.chat, sim: data.models.sim })} · ${data.ai ? `<span class="pill ok">${t("teacher.usage.aiok")}</span>` : `<span class="pill bad">${t("teacher.usage.aino")}</span>`}</p>
+  body.innerHTML = `<p class="small">${t("teacher.usage.models")} · ${data.ai ? `<span class="pill ok">${t("teacher.usage.aiok")}</span>` : `<span class="pill bad">${t("teacher.usage.aino")}</span>`}</p>
     <div class="t-table-wrap"><table class="t-table"><thead><tr><th>${t("teacher.usage.kind")}</th><th>${t("teacher.usage.today")}</th><th>${t("teacher.usage.limitglobal")}</th><th>${t("teacher.usage.limitstudent")}</th></tr></thead><tbody>
     ${kinds.map(k => `<tr><td>${t("teacher.usage.k." + k)}</td><td class="num">${data.today[k] || 0}</td><td class="num">${data.limits[k].global || "∞"}</td><td class="num">${data.limits[k].perStudent || "∞"}</td></tr>`).join("")}
     </tbody></table></div>`;

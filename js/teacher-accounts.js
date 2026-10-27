@@ -8,6 +8,7 @@
    Memakai fungsi global dari teacher.js (callBackend, escapeHtml, t, ...).
    ============================================================ */
 let accCache = null;
+const accSelected = new Set();
 
 function accParseLines(text) {
   return String(text || "").split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => {
@@ -46,18 +47,14 @@ function accPinCell(a) {
 }
 
 function accMemberRow(a, groupsInClass, leaderId) {
-  const opts = [`<option value="">${t("acc.nogroup")}</option>`]
-    .concat(groupsInClass.map(g => `<option value="${escapeAttrT(g.name)}"${g.groupId === a.groupId ? " selected" : ""}>${escapeHtml(g.name)}</option>`))
-    .concat([`<option value="__new">${t("acc.newgroup")}</option>`]).join("");
-  return `<tr class="${a.active ? "" : "acc-inactive"}">
+  return `<tr class="${a.active ? "" : "acc-inactive"}${accSelected.has(a.studentId) ? " acc-selected" : ""}">
+    <td class="acc-cb"><input type="checkbox" data-acc-sel="${escapeAttrT(a.studentId)}"${accSelected.has(a.studentId) ? " checked" : ""} aria-label="${escapeAttrT(a.name)}"></td>
     <td><button type="button" class="student-link" data-sid="${escapeAttrT(a.studentId)}">${escapeHtml(a.name)}</button>${a.studentId === leaderId ? ` <span class="pill solid">${t("teacher.rec.leader")}</span>` : ""}${a.active ? "" : ` <span class="pill bad">${t("acc.inactive")}</span>`}</td>
     <td class="num">${accPinCell(a)}</td>
     <td class="num">${a.lastLogin ? relativeTime(a.lastLogin) : `<span class="muted">${t("acc.neverlogin")}</span>`}</td>
     <td><div class="acc-actions">
-      <select data-acc-move="${escapeAttrT(a.studentId)}" aria-label="${escapeAttrT(t("acc.move"))}">${opts}</select>
       <button type="button" class="btn btn-ghost btn-small" data-acc-reset="${escapeAttrT(a.studentId)}">${t("acc.resetpin")}</button>
       <button type="button" class="btn btn-ghost btn-small" data-acc-active="${escapeAttrT(a.studentId)}" data-val="${a.active ? "0" : "1"}">${a.active ? t("acc.deactivate") : t("acc.activate")}</button>
-      <button type="button" class="btn btn-ghost btn-small" data-acc-delete="${escapeAttrT(a.studentId)}">${t("acc.delete")}</button>
     </div></td>
   </tr>`;
 }
@@ -65,10 +62,10 @@ function accMemberRow(a, groupsInClass, leaderId) {
 function renderAccounts() {
   const box = document.getElementById("acc-groups");
   const { accounts, groups } = accFiltered();
-  if (!accounts.length && !groups.length) { box.innerHTML = `<p class="muted small">${t("acc.empty")}</p>`; return; }
+  if (!accounts.length && !groups.length) { box.innerHTML = `<p class="muted small">${t("acc.empty")}</p>`; accUpdateBulk(); return; }
   const locks = (accCache.locks || []);
   const classes = [...new Set(accounts.map(a => a.className).concat(groups.map(g => g.className)))].sort();
-  const head = `<thead><tr><th>${t("teacher.rec.student")}</th><th>PIN</th><th>${t("acc.lastlogin")}</th><th>${t("teacher.gate.th.action")}</th></tr></thead>`;
+  const head = `<thead><tr><th class="acc-cb"></th><th>${t("teacher.rec.student")}</th><th>PIN</th><th>${t("acc.lastlogin")}</th><th>${t("teacher.gate.th.action")}</th></tr></thead>`;
   box.innerHTML = classes.map(cls => {
     const gs = groups.filter(g => g.className === cls);
     const inCls = accounts.filter(a => a.className === cls);
@@ -81,22 +78,88 @@ function renderAccounts() {
       const leaderOpts = [`<option value="">${t("acc.noleader")}</option>`].concat(mem.filter(m => m.active).map(m => `<option value="${escapeAttrT(m.studentId)}"${m.studentId === g.leaderId ? " selected" : ""}>${escapeHtml(m.name)}</option>`)).join("");
       return `<div class="acc-group">
         <div class="acc-group-head">
-          <h4>${escapeHtml(g.name)} <span class="muted small">· ${mem.length} ${t("acc.members")}</span></h4>
+          <h4><label class="acc-check"><input type="checkbox" data-acc-selgroup="${escapeAttrT(g.groupId)}"${mem.length && mem.every(m => accSelected.has(m.studentId)) ? " checked" : ""}${mem.length ? "" : " disabled"} aria-label="${escapeAttrT(t("acc.bulk.selgroup") + " " + g.name)}"> ${escapeHtml(g.name)}</label> <span class="muted small">· ${mem.length} ${t("acc.members")}</span></h4>
           <label class="acc-leader"><span>${t("acc.leader")}</span><select data-group-leader="${escapeAttrT(g.groupId)}">${leaderOpts}</select></label>
         </div>
         <p class="small acc-lock ${lk.length ? "on" : ""}"><span class="status-dot ${lk.length ? "online" : ""}"></span>${t("acc.lockstatus")}: ${lockTxt}
           ${lk.length ? `<button type="button" class="btn btn-secondary btn-small" data-group-unlock="${escapeAttrT(g.groupId)}">${t("acc.unlock")}</button>` : ""}
           <button type="button" class="link-btn small" data-group-delete="${escapeAttrT(g.groupId)}">${t("acc.deletegroup")}</button></p>
-        <div class="t-table-wrap"><table class="t-table">${head}<tbody>${mem.map(a => accMemberRow(a, gs, g.leaderId)).join("") || `<tr><td colspan="4" class="muted small">${t("acc.groupempty")}</td></tr>`}</tbody></table></div>
+        <div class="t-table-wrap"><table class="t-table">${head}<tbody>${mem.map(a => accMemberRow(a, gs, g.leaderId)).join("") || `<tr><td colspan="5" class="muted small">${t("acc.groupempty")}</td></tr>`}</tbody></table></div>
       </div>`;
     }).join("");
     const lone = inCls.filter(a => !a.groupId || !gs.find(g => g.groupId === a.groupId));
-    const loneCard = lone.length ? `<div class="acc-group acc-lone"><div class="acc-group-head"><h4>${t("acc.nogroup")}</h4></div>
+    const loneCard = lone.length ? `<div class="acc-group acc-lone"><div class="acc-group-head"><h4><label class="acc-check"><input type="checkbox" data-acc-sellone="${escapeAttrT(cls)}"${lone.every(m => accSelected.has(m.studentId)) ? " checked" : ""}> ${t("acc.nogroup")}</label></h4></div>
       <p class="muted small">${t("acc.nogroup.desc")}</p>
       <div class="t-table-wrap"><table class="t-table">${head}<tbody>${lone.map(a => accMemberRow(a, gs, null)).join("")}</tbody></table></div></div>` : "";
     return `<section class="acc-class"><h3 class="acc-class-title">${t("field.class")} ${escapeHtml(cls)}</h3>${cards}${loneCard}</section>`;
   }).join("");
+  accUpdateBulk();
 }
+
+/* ---------- Pilih banyak siswa: hapus / pindah kelompok / pindah kelas ---------- */
+function accVisibleIds() { return accFiltered().accounts.map(a => a.studentId); }
+function accUpdateBulk() {
+  if (!accCache) return;
+  const known = new Set(accCache.accounts.map(a => a.studentId));
+  [...accSelected].forEach(id => { if (!known.has(id)) accSelected.delete(id); });
+  const vis = accVisibleIds();
+  const all = document.getElementById("acc-select-all");
+  const nSel = vis.filter(id => accSelected.has(id)).length;
+  all.checked = vis.length > 0 && nSel === vis.length;
+  all.indeterminate = nSel > 0 && nSel < vis.length;
+  document.getElementById("acc-bulk-count").textContent = t("acc.bulk.count", { n: accSelected.size });
+  const act = document.getElementById("acc-bulk-action").value;
+  document.getElementById("acc-bulk-class").hidden = act !== "class";
+  document.getElementById("acc-bulk-group").hidden = act !== "group" && act !== "class";
+  document.getElementById("acc-bulk-apply").disabled = !accSelected.size || !act;
+  document.getElementById("acc-bulk-apply").classList.toggle("btn-danger", act === "delete");
+  // saran isian: kelas yang ada, kelompok di kelas tujuan
+  const classes = [...new Set(accCache.accounts.map(a => a.className).concat(accCache.groups.map(g => g.className)))].sort();
+  document.getElementById("acc-bulk-class-list").innerHTML = classes.map(c => `<option value="${escapeAttrT(c)}">`).join("");
+  const selCls = [...new Set(accCache.accounts.filter(a => accSelected.has(a.studentId)).map(a => a.className))];
+  const target = act === "class" ? document.getElementById("acc-bulk-class").value.trim() : (selCls.length === 1 ? selCls[0] : "");
+  document.getElementById("acc-bulk-group-list").innerHTML = accCache.groups.filter(g => !target || g.className === target).map(g => `<option value="${escapeAttrT(g.name)}">`).join("");
+}
+function accSetSel(ids, on) { ids.forEach(id => on ? accSelected.add(id) : accSelected.delete(id)); renderAccounts(); }
+document.getElementById("acc-select-all").addEventListener("change", e => accSetSel(accVisibleIds(), e.target.checked));
+document.getElementById("acc-bulk-action").addEventListener("change", accUpdateBulk);
+document.getElementById("acc-bulk-class").addEventListener("input", accUpdateBulk);
+document.getElementById("acc-bulk-apply").addEventListener("click", async () => {
+  const act = document.getElementById("acc-bulk-action").value;
+  const ids = [...accSelected];
+  if (!ids.length || !act) return;
+  const names = accCache.accounts.filter(a => accSelected.has(a.studentId)).map(a => a.name);
+  const list = names.slice(0, 8).join(", ") + (names.length > 8 ? ` +${names.length - 8}` : "");
+  const body = { studentIds: ids };
+  let msg;
+  if (act === "delete") {
+    body.action = "delete";
+    if (!confirm(t("acc.bulk.delete.confirm", { n: ids.length, list }))) return;
+    msg = "acc.bulk.deleted";
+  } else {
+    body.action = "move";
+    const grp = document.getElementById("acc-bulk-group").value.trim();
+    if (act === "class") {
+      const cls = document.getElementById("acc-bulk-class").value.trim();
+      if (!cls) { document.getElementById("acc-status").textContent = t("acc.bulk.needclass"); return; }
+      body.className = cls; body.groupName = grp;
+      if (!confirm(t("acc.bulk.class.confirm", { n: ids.length, cls, list }))) return;
+    } else {
+      body.groupName = grp;
+      if (!confirm(t(grp ? "acc.bulk.group.confirm" : "acc.bulk.nogroup.confirm", { n: ids.length, grp, list }))) return;
+    }
+    msg = "acc.bulk.moved";
+  }
+  const d = await accAction("teacher_accounts_bulk", body);
+  if (d && !d.error) {
+    accSelected.clear();
+    document.getElementById("acc-bulk-action").value = "";
+    document.getElementById("acc-bulk-class").value = "";
+    document.getElementById("acc-bulk-group").value = "";
+    renderAccounts();
+    document.getElementById("acc-status").textContent = t(msg, { n: d.done.length }) + (d.skipped && d.skipped.length ? " " + t("acc.add.skipped", { list: d.skipped.map(x => x.reason).join("; ") }) : "");
+  }
+});
 
 async function accAction(mode, body, okMsg) {
   const statusEl = document.getElementById("acc-status");
@@ -139,12 +202,6 @@ document.getElementById("acc-groups").addEventListener("click", async e => {
   }
   const act = e.target.closest("[data-acc-active]");
   if (act) { await accAction("teacher_account_update", { studentId: act.dataset.accActive, active: act.dataset.val === "1" }); return; }
-  const del = e.target.closest("[data-acc-delete]");
-  if (del) {
-    if (!confirm(t("acc.delete.confirm"))) return;
-    await accAction("teacher_delete_student", { studentId: del.dataset.accDelete });
-    return;
-  }
   const unlock = e.target.closest("[data-group-unlock]");
   if (unlock) { await accAction("teacher_group_update", { groupId: unlock.dataset.groupUnlock, unlock: true }, t("acc.unlock.done")); return; }
   const gdel = e.target.closest("[data-group-delete]");
@@ -156,14 +213,14 @@ document.getElementById("acc-groups").addEventListener("click", async e => {
 document.getElementById("acc-groups").addEventListener("change", async e => {
   const leader = e.target.closest("[data-group-leader]");
   if (leader) { await accAction("teacher_group_update", { groupId: leader.dataset.groupLeader, leaderId: leader.value }, t("acc.leader.done")); return; }
-  const move = e.target.closest("[data-acc-move]");
-  if (move) {
-    let name = move.value;
-    if (name === "__new") {
-      name = (window.prompt(t("acc.newgroup.prompt"), "") || "").trim();
-      if (!name) { renderAccounts(); return; }
-    }
-    await accAction("teacher_account_update", { studentId: move.dataset.accMove, groupName: name });
+  const sel = e.target.closest("[data-acc-sel]");
+  if (sel) { accSetSel([sel.dataset.accSel], sel.checked); return; }
+  const sg = e.target.closest("[data-acc-selgroup]");
+  if (sg) { accSetSel(accFiltered().accounts.filter(a => a.groupId === sg.dataset.accSelgroup).map(a => a.studentId), sg.checked); return; }
+  const sl = e.target.closest("[data-acc-sellone]");
+  if (sl) {
+    const gids = new Set(accCache.groups.filter(g => g.className === sl.dataset.accSellone).map(g => g.groupId));
+    accSetSel(accFiltered().accounts.filter(a => a.className === sl.dataset.accSellone && (!a.groupId || !gids.has(a.groupId))).map(a => a.studentId), sl.checked);
   }
 });
 document.getElementById("acc-class-filter").addEventListener("change", renderAccounts);

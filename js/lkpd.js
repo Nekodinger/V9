@@ -49,7 +49,7 @@ window.LKPD = (function () {
   /* ---------- penyimpanan lokal ---------- */
   function loadAll() { try { return JSON.parse(localStorage.getItem(STORE) || "{}") || {}; } catch (e) { return {}; } }
   function keyOf(topicId, mode) { return getStudentId() + "|" + topicId + "|" + mode; }
-  function emptyState() { return { v: 1, group: "", tick: {}, vars: {}, a: {}, ck: {}, first: {}, tries: {}, open: {}, revealed: {}, table: null, updatedAt: 0, tableSavedAt: 0 }; }
+  function emptyState() { return { v: 1, group: "", tick: {}, vars: {}, a: {}, ck: {}, first: {}, tries: {}, open: {}, revealed: {}, table: null, asm: 0, updatedAt: 0, tableSavedAt: 0 }; }
   function loadState(topicId, mode) {
     const s = loadAll()[keyOf(topicId, mode)];
     return Object.assign(emptyState(), s || {});
@@ -167,6 +167,7 @@ window.LKPD = (function () {
       if (sec.type === "materials" || sec.type === "steps") sec.items.forEach((_, i) => { total++; if (st.tick[idx + "-" + i]) done++; });
       else if (sec.type === "vars") sec.fields.filter(f => f.fixed === undefined).forEach(f => { total++; if (num(st.vars[f.key]) !== null) done++; });
       else if (sec.type === "table") { total++; if (points().length >= 3) done++; }
+      else if (sec.type === "vlab") { total++; if (asmDone()) done++; }
       else if (checkable(sec)) { total++; checkTotal++; if (st.ck[sec.id]) done++; if (st.ck[sec.id] === 1) okCount++; }
       else if (sec.type === "open") { total++; if ((st.open[sec.id] || "").trim().length >= 15) done++; }
     });
@@ -200,16 +201,71 @@ window.LKPD = (function () {
       ${dt.readonly ? `<button type="button" class="btn btn-ghost btn-small" data-act="clear-table">${t("lkpd.table.clear")}</button>` : ""}
       <span class="eks-dt-status" data-table-status></span></div></div>`;
   }
+  /* ---------- Merakit alat virtual (sebelum mengukur) ----------
+     Siswa memasang alat satu per satu dengan urutan seperti di lab:
+     neraca -> magnet -> tare -> kawat uji + klem -> amperemeter ->
+     catu daya -> kabel penghubung. Bagian bisa diketuk atau diseret ke
+     meja kerja. Urutan salah memberi petunjuk, bukan nilai. */
+  const ASM_STEPS = ["balance", "magnets", "tare", "wire", "ammeter", "supply", "leads"];
+  const ASM_TRAY = ["ammeter", "magnets", "leads", "balance", "supply", "wire"]; // sengaja diacak tetap
+  const ASM_ICON = {
+    balance: '<rect x="3" y="13" width="26" height="12" rx="3"/><ellipse cx="16" cy="12" rx="12" ry="2.5"/><rect x="11" y="17" width="10" height="5" rx="1" fill="#0d1f16"/>',
+    magnets: '<rect x="5" y="6" width="8" height="15" rx="1.5" fill="#b23b3b" stroke="none"/><rect x="19" y="6" width="8" height="15" rx="1.5" fill="#3b6bb2" stroke="none"/><rect x="3" y="21" width="26" height="4" />',
+    wire: '<line x1="3" y1="14" x2="29" y2="14" stroke="#cc3333" stroke-width="3"/><line x1="6" y1="14" x2="6" y2="27"/><line x1="26" y1="14" x2="26" y2="27"/>',
+    ammeter: '<circle cx="16" cy="16" r="11"/><line x1="16" y1="16" x2="22" y2="9" stroke-width="2"/><text x="16" y="25" font-size="7" text-anchor="middle" stroke="none" fill="currentColor">A</text>',
+    supply: '<rect x="3" y="8" width="26" height="17" rx="3"/><circle cx="9" cy="8" r="2"/><circle cx="23" cy="8" r="2"/><line x1="8" y1="21" x2="22" y2="13" stroke-width="1.6"/>',
+    leads: '<path d="M4,24 C10,4 22,28 28,8" fill="none" stroke-width="2.2"/><circle cx="4" cy="24" r="2.2"/><circle cx="28" cy="8" r="2.2"/>'
+  };
+  let asmWin = null;
+  const MAGNET_GRAMS = 41.37; // massa magnet + yoke yang terbaca sebelum tare
+  function asmDone() { return (ctx.st.asm || 0) >= ASM_STEPS.length; }
+  function asmHTML() {
+    const n = Math.min(ctx.st.asm || 0, ASM_STEPS.length);
+    return `<div class="vlab-asm" data-asm>
+      <div class="vlab-asm-head"><strong>${t("vlab.asm.title")}</strong><span class="small muted" data-asm-count>${t("vlab.asm.count", { n, total: ASM_STEPS.length })}</span></div>
+      <p class="small muted" style="margin:4px 0 10px">${t("vlab.asm.desc")}</p>
+      <ol class="vlab-asm-steps">${ASM_STEPS.map((id, i) => `<li data-asm-step="${id}" class="${i < n ? "done" : i === n ? "current" : ""}">${t("vlab.asm.step." + id)}</li>`).join("")}</ol>
+      <div class="vlab-asm-tray" role="list">${ASM_TRAY.map(id => `<button type="button" class="vlab-asm-item" role="listitem" data-asm-part="${id}"${ASM_STEPS.indexOf(id) < n ? " hidden" : ""}><svg viewBox="0 0 32 32" aria-hidden="true" fill="var(--panel-light, #f2f3fb)" stroke="currentColor" stroke-width="1.4">${ASM_ICON[id]}</svg><span>${t("vlab.asm.part." + id)}</span></button>`).join("")}
+        <button type="button" class="btn btn-secondary btn-small vlab-asm-tare" data-asm-part="tare"${n === 2 ? "" : " hidden"}>${t("vlab.asm.tarebtn")}</button></div>
+      <p class="vlab-asm-msg small" data-asm-msg aria-live="polite"></p>
+    </div>`;
+  }
   function vlabHTML() {
     const dt = ctx.def.dataTable, ap = ctx.def.apparatus;
-    return `<div class="lkpd-vlab-wrap"><div class="vlab-apparatus" id="vlab-apparatus-box">
-      <div class="vlab-diagram-wrap">${typeof renderVlabApparatusSVG === "function" ? renderVlabApparatusSVG() : ""}</div>
-      <div class="lkpd-answer-row" style="margin-top:0">
+    return `<div class="lkpd-vlab-wrap${asmDone() ? "" : " vlab-unassembled"}">${asmHTML()}<div class="vlab-apparatus" id="vlab-apparatus-box">
+      <div class="vlab-diagram-wrap" data-asm-drop>${typeof renderVlabApparatusSVG === "function" ? renderVlabApparatusSVG() : ""}<span class="vlab-asm-dropnote">${t("vlab.asm.drophere")}</span></div>
+      <div class="lkpd-answer-row vlab-controls" style="margin-top:0">
         <span class="mono small">L = ${fmt(ap.lengthM * 100, 2)} cm</span>
         <label style="margin:0;display:flex;align-items:center;gap:6px">${t("vlab.current.label")}<select data-vlab-i>${dt.independentValues.map(v => `<option value="${v}">${fmt(v, 3)} A</option>`).join("")}</select></label>
         <button type="button" class="btn btn-accent btn-small" data-act="vlab-read">${t("vlab.readbtn")}</button>
         <span class="small muted" data-vlab-status></span>
       </div></div></div>`;
+  }
+  // Tabel Alat & Bahan: No (dengan centang siap) | Nama alat | Jumlah | Gambar
+  function photoCell(key) {
+    if (key === "svg:vlab") return `<div class="lkpd-mat-svg">${typeof renderVlabApparatusSVG === "function" ? renderVlabApparatusSVG().replace(/ id="[^"]*"/g, "") : ""}</div>`;
+    const ph = (typeof LKPD_PHOTOS !== "undefined" && LKPD_PHOTOS[key]) || null;
+    if (!ph) return `<span class="muted small">-</span>`;
+    const url = ph.url || (LKPD_PHOTO_BASE + ph.src);
+    const page = "https://commons.wikimedia.org/wiki/File:" + encodeURIComponent(ph.file);
+    return `<a href="${esc(page)}" target="_blank" rel="noopener noreferrer" class="lkpd-mat-photo"><img src="${esc(url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.closest('.lkpd-mat-photo').classList.add('noimg')"></a>`;
+  }
+  function materialsTableHTML(sec, idx) {
+    const st = ctx.st;
+    const rows = sec.items.map((it, i) => {
+      const k = idx + "-" + i, on = !!st.tick[k];
+      return `<tr class="${on ? "checked" : ""}">
+        <td class="lkpd-mat-no"><label><input type="checkbox" data-tick="${k}"${on ? " checked" : ""} aria-label="${esc(t("lkpd.mat.ready"))} ${i + 1}"><span>${i + 1}</span></label></td>
+        <td class="lkpd-mat-name">${trContent(it.n)}${it.note ? `<span class="note">${trContent(it.note)}</span>` : ""}</td>
+        <td class="lkpd-mat-qty">${it.qty ? trContent(it.qty) : "-"}</td>
+        <td class="lkpd-mat-img">${photoCell(it.photo)}</td></tr>`;
+    }).join("");
+    const used = [...new Set(sec.items.map(it => it.photo).filter(p => p && p !== "svg:vlab" && typeof LKPD_PHOTOS !== "undefined" && LKPD_PHOTOS[p]))];
+    const credits = used.length ? `<p class="lkpd-mat-credit">${t("lkpd.mat.credit")} ${used.map(k => { const ph = LKPD_PHOTOS[k]; return `<a href="https://commons.wikimedia.org/wiki/File:${esc(encodeURIComponent(ph.file))}" target="_blank" rel="noopener noreferrer">${esc(ph.by)}</a> (${esc(ph.lic)})`; }).join(", ")}.</p>` : "";
+    return `<p class="lkpd-desc small">${t("lkpd.mat.hint")}</p>
+      <div class="lkpd-mat-wrap"><table class="lkpd-mat-table"><thead><tr><th>${t("lkpd.mat.no")}</th><th>${t("lkpd.mat.name")}</th><th>${t("lkpd.mat.qty")}</th><th>${t("lkpd.mat.img")}</th></tr></thead><tbody>${rows}</tbody></table></div>${credits}` +
+      (sec.kits && sec.kits.length ? `<p class="eyebrow dim" style="margin-top:16px">${t("lkpd.kits.title")}</p><div class="lkpd-kits">${sec.kits.map(k => `<div class="lkpd-kit"><span class="code">${esc(k.code)}</span><strong>${trContent(k.name)}</strong><span>${trContent(k.note)}</span>${k.url ? `<br><a href="${esc(k.url)}" target="_blank" rel="noopener noreferrer">${trContent(k.urlLabel || k.url)}</a>` : ""}</div>`).join("")}</div>` : "") +
+      (sec.footnote ? `<p class="muted small" style="margin-top:12px">${trContent(sec.footnote)}</p>` : "");
   }
   function sectionHTML(sec, idx, no) {
     const st = ctx.st;
@@ -219,6 +275,8 @@ window.LKPD = (function () {
     switch (sec.type) {
       case "info": inner = title + `<div class="lkpd-desc">${trContent(sec.html)}</div>`; break;
       case "materials":
+        if (sec.items.some(it => it.photo || it.qty)) { inner = title + materialsTableHTML(sec, idx); break; }
+      // falls through
       case "steps":
         inner = title + `<ul class="lkpd-check-list">${sec.items.map((it, i) => {
           const k = idx + "-" + i, on = !!st.tick[k];
@@ -508,7 +566,84 @@ window.LKPD = (function () {
     const vals = ctx.def.dataTable.independentValues, lo = Math.min(...vals), hi = Math.max(...vals);
     el.style.transform = "rotate(" + (-60 + (hi > lo ? (I - lo) / (hi - lo) : .5) * 120).toFixed(1) + "deg)";
   }
+  function asmApply(animatePart) {
+    const r = ctx.root, n = Math.min(ctx.st.asm || 0, ASM_STEPS.length);
+    const placed = new Set(ASM_STEPS.slice(0, n));
+    r.querySelectorAll(".vlab-part").forEach(g => {
+      const on = placed.has(g.dataset.part);
+      g.classList.toggle("vlab-part-missing", !on);
+      if (on && g.dataset.part === animatePart) { g.classList.remove("vlab-part-in"); void g.getBoundingClientRect(); g.classList.add("vlab-part-in"); }
+    });
+    r.querySelectorAll("[data-asm-step]").forEach((li, i) => { li.className = i < n ? "done" : i === n ? "current" : ""; });
+    r.querySelectorAll(".vlab-asm-item").forEach(b => { b.hidden = placed.has(b.dataset.asmPart); });
+    const tare = r.querySelector(".vlab-asm-tare"); if (tare) tare.hidden = n !== 2;
+    const cnt = r.querySelector("[data-asm-count]"); if (cnt) cnt.textContent = t("vlab.asm.count", { n, total: ASM_STEPS.length });
+    const disp = r.querySelector("#vlab-balance-display");
+    if (disp && !asmDone()) disp.textContent = n === 2 ? fmtGrams(MAGNET_GRAMS) : fmtGrams(0);
+    const wrap = r.querySelector(".lkpd-vlab-wrap");
+    if (wrap) wrap.classList.toggle("vlab-unassembled", !asmDone());
+    const box = r.querySelector("[data-asm]"); if (box) box.classList.toggle("complete", asmDone());
+  }
+  function fmtGrams(g) { const v = g.toFixed(2); return (getLang() === "id" ? v.replace(".", ",") : v) + " g"; }
+  function asmTry(part) {
+    if (readOnly || asmDone()) return;
+    const n = ctx.st.asm || 0, expected = ASM_STEPS[n];
+    const msg = ctx.root.querySelector("[data-asm-msg]");
+    if (part === expected) {
+      ctx.st.asm = n + 1;
+      msg.className = "vlab-asm-msg small ok";
+      msg.textContent = asmDone() ? t("vlab.asm.complete") : t("vlab.asm.ok." + part);
+      asmApply(part);
+      touch(); refreshProgress();
+      if (asmDone()) { const sel = ctx.root.querySelector("[data-vlab-i]"); if (sel) needle(parseFloat(sel.value)); }
+    } else {
+      msg.className = "vlab-asm-msg small warn";
+      msg.textContent = t("vlab.asm.wrong." + expected);
+      const btn = ctx.root.querySelector(`[data-asm-part="${part}"]`);
+      if (btn) { btn.classList.remove("shake"); void btn.offsetWidth; btn.classList.add("shake"); }
+    }
+  }
+  // Seret (pointer) atau ketuk: keduanya didukung, termasuk di iPad.
+  function wireAsm() {
+    const r = ctx.root, tray = r.querySelector(".vlab-asm-tray"), drop = r.querySelector("[data-asm-drop]");
+    if (!tray || !drop) return;
+    let drag = null;
+    if (asmWin) { window.removeEventListener("pointermove", asmWin.move); window.removeEventListener("pointerup", asmWin.end); window.removeEventListener("pointercancel", asmWin.end); }
+    tray.addEventListener("pointerdown", e => {
+      const b = e.target.closest(".vlab-asm-item");
+      if (!b || readOnly || b.disabled) return;
+      drag = { b, x: e.clientX, y: e.clientY, ghost: null, id: e.pointerId };
+    });
+    const move = e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      if (!drag.ghost && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 8) {
+        drag.ghost = drag.b.cloneNode(true);
+        drag.ghost.classList.add("vlab-asm-ghost");
+        document.body.appendChild(drag.ghost);
+        drop.classList.add("vlab-drop-active");
+      }
+      if (drag.ghost) { drag.ghost.style.left = e.clientX + "px"; drag.ghost.style.top = e.clientY + "px"; e.preventDefault(); }
+    };
+    window.addEventListener("pointermove", move, { passive: false });
+    const end = e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const d = drag; drag = null;
+      drop.classList.remove("vlab-drop-active");
+      if (!d.ghost) return; // ketukan biasa: ditangani oleh click
+      d.ghost.remove();
+      d.b.dataset.dragged = "1";
+      const rc = drop.getBoundingClientRect();
+      if (e.clientX >= rc.left && e.clientX <= rc.right && e.clientY >= rc.top && e.clientY <= rc.bottom) asmTry(d.b.dataset.asmPart);
+    };
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+    asmWin = { move, end };
+  }
   function initVlab() {
+    // Data lama (sebelum fitur rakit alat): sudah ada bacaan -> dianggap sudah terakit
+    if (!asmDone() && points().length) ctx.st.asm = ASM_STEPS.length;
+    asmApply(null);
+    wireAsm();
     const sel = ctx.root.querySelector("[data-vlab-i]");
     if (!sel) return;
     needle(parseFloat(sel.value));
@@ -551,7 +686,7 @@ window.LKPD = (function () {
     const r = ctx.root;
     r.addEventListener("change", e => {
       const tk = e.target.closest("[data-tick]");
-      if (tk) { ctx.st.tick[tk.dataset.tick] = tk.checked; tk.closest("li").classList.toggle("checked", tk.checked); touch(); refreshProgress(); }
+      if (tk) { ctx.st.tick[tk.dataset.tick] = tk.checked; tk.closest("li, tr").classList.toggle("checked", tk.checked); touch(); refreshProgress(); }
     });
     r.addEventListener("input", e => {
       const el = e.target;
@@ -573,12 +708,14 @@ window.LKPD = (function () {
         if (!box.hidden) { ctx.st.revealed[id] = Date.now(); touch(); typeset(box); }
         return;
       }
+      const ap = e.target.closest("[data-asm-part]");
+      if (ap) { if (ap.dataset.dragged) { delete ap.dataset.dragged; return; } asmTry(ap.dataset.asmPart); return; }
       const act = e.target.closest("[data-act]");
       if (!act) return;
       const a = act.dataset.act;
       if (a === "save-table") saveTable();
       else if (a === "clear-table") { if (confirm(t("lkpd.table.clear.confirm"))) { r.querySelectorAll("[data-tv]").forEach(i => { i.value = ""; }); onTableInput(); } }
-      else if (a === "vlab-read") vlabRead(act);
+      else if (a === "vlab-read") { if (asmDone()) vlabRead(act); }
       else if (a === "print") window.print();
       else if (a === "submit") submit(act);
     });

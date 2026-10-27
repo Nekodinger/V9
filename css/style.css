@@ -837,3 +837,72 @@ tr.acc-inactive td { opacity: .55; }
 .class-only-note p { margin: 0 0 16px; color: var(--muted, #5b6275); max-width: 70ch; }
 #panel-lab.ai-off > :not(.pjbl-stage-label):not(#lab-class-only) { display: none !important; }
 body.ai-off #chatbot-toggle-btn, body.ai-off #chatbot-panel { display: none !important; }
+
+/* Panel Guru: pilih banyak siswa */
+.acc-bulk { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 14px; margin: 4px 0 18px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--white); position: sticky; top: calc(var(--header-h, 72px) + 8px); z-index: 5; box-shadow: var(--shadow); }
+.acc-bulk select { width: auto !important; flex: 0 1 230px; min-width: 190px; margin: 0; }
+.acc-bulk input[type=text] { flex: 1 1 180px; width: auto !important; min-width: 150px; margin: 0; }
+.acc-bulk .acc-check, .acc-bulk-count { line-height: 1; }
+.acc-bulk-count { font-weight: 600; font-size: .9rem; color: var(--primary, #525FE1); min-width: 80px; }
+.acc-check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.acc-check input, td.acc-cb input { width: 17px; height: 17px; accent-color: var(--primary, #525FE1); cursor: pointer; }
+td.acc-cb, th.acc-cb { width: 34px; padding-right: 0 !important; }
+tr.acc-selected td { background: rgba(82, 95, 225, .07); }
+.btn.btn-danger { background: #D9473F; border-color: #D9473F; color: #fff; }
+
+/* Praktikum virtual: merakit alat */
+.vlab-asm { border: 1px solid var(--line-2); border-radius: 12px; padding: 16px 18px; margin-bottom: 14px; background: var(--white); }
+.vlab-asm.complete { border-color: #9bd3b0; background: #f3fbf6; }
+.vlab-asm-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.vlab-asm-steps { margin: 0 0 12px; padding-left: 22px; display: grid; gap: 3px; font-size: .88rem; }
+.vlab-asm-steps li { color: var(--muted, #6b7080); }
+.vlab-asm-steps li.done { color: #1f8a4c; text-decoration: line-through; text-decoration-color: rgba(31, 138, 76, .45); }
+.vlab-asm-steps li.current { color: var(--ink, #0b104a); font-weight: 600; }
+.vlab-asm-tray { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.vlab-asm-item { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1.5px solid var(--line-2); border-radius: 10px; background: var(--white); color: var(--ink, #0b104a); font: inherit; font-size: .88rem; font-weight: 600; cursor: grab; touch-action: none; user-select: none; transition: transform .15s, border-color .15s, box-shadow .15s; }
+.vlab-asm-item:hover { border-color: var(--primary, #525FE1); box-shadow: 0 6px 16px rgba(82, 95, 225, .14); transform: translateY(-1px); }
+.vlab-asm-item svg { width: 30px; height: 30px; flex: none; color: var(--ink, #0b104a); }
+.vlab-asm-item.shake { animation: vlabShake .35s; border-color: #d9473f; }
+@keyframes vlabShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+.vlab-asm-ghost { position: fixed; z-index: 1000; pointer-events: none; transform: translate(-50%, -50%) scale(1.05); box-shadow: 0 14px 30px rgba(11, 16, 74, .25); opacity: .95; }
+.vlab-asm-msg { min-height: 1.3em; margin: 10px 0 0; }
+.vlab-asm-msg.ok { color: #1f8a4c; } .vlab-asm-msg.warn { color: #b5562a; }
+.vlab-asm.complete .vlab-asm-tray, .vlab-asm.complete .vlab-asm-steps { display: none; }
+.vlab-diagram-wrap { position: relative; }
+.vlab-asm-dropnote { display: none; position: absolute; left: 10px; top: 8px; font-size: .75rem; color: var(--muted, #6b7080); background: rgba(255,255,255,.85); padding: 2px 8px; border-radius: 20px; }
+.vlab-unassembled .vlab-asm-dropnote { display: inline-block; }
+.vlab-unassembled .vlab-diagram-wrap { outline: 2px dashed var(--line-2); outline-offset: 4px; border-radius: 10px; }
+.vlab-diagram-wrap.vlab-drop-active { outline-color: var(--primary, #525FE1); background: rgba(82, 95, 225, .05); }
+.vlab-unassembled .vlab-controls { display: none; }
+.vlab-part { transition: opacity .35s; }
+.vlab-part-missing { opacity: .1; }
+.vlab-part-missing .vlab-wire-flow { animation: none !important; }
+.vlab-part-in { animation: vlabPartIn .5s ease-out; }
+@keyframes vlabPartIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+
+/* LKPD: tabel alat & bahan bergambar */
+.lkpd-mat-wrap { overflow-x: auto; border: 1px solid var(--line-2); border-radius: 12px; background: var(--white); }
+.lkpd-mat-table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.lkpd-mat-table th { text-align: left; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted, #6b7080); background: #f6f7fc; padding: 10px 12px; border-bottom: 1px solid var(--line-2); }
+.lkpd-mat-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.lkpd-mat-table tr:last-child td { border-bottom: 0; }
+.lkpd-mat-table tr.checked td { background: #f3fbf6; }
+.lkpd-mat-no { width: 64px; }
+.lkpd-mat-no label { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; cursor: pointer; }
+.lkpd-mat-no input { width: 17px; height: 17px; accent-color: #1f8a4c; }
+.lkpd-mat-name .note { display: block; margin-top: 3px; font-size: .82rem; color: var(--muted, #6b7080); }
+.lkpd-mat-qty { white-space: nowrap; font-weight: 600; width: 110px; }
+.lkpd-mat-img { width: 150px; }
+.lkpd-mat-photo { display: block; width: 120px; height: 84px; border-radius: 8px; overflow: hidden; background: #f2f3f8; border: 1px solid var(--line); }
+.lkpd-mat-photo img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.lkpd-mat-photo.noimg img { display: none; }
+.lkpd-mat-photo.noimg::after { content: "foto tidak termuat"; display: grid; place-items: center; height: 100%; font-size: .72rem; color: var(--muted, #6b7080); }
+.lkpd-mat-svg { width: 150px; background: #f6f7fc; border-radius: 8px; border: 1px solid var(--line); padding: 2px; }
+.lkpd-mat-svg svg { width: 100%; height: auto; display: block; }
+.lkpd-mat-credit { margin: 8px 2px 0; font-size: .72rem; color: var(--muted, #6b7080); line-height: 1.5; }
+.lkpd-mat-credit a { color: inherit; }
+@media (max-width: 640px) {
+  .lkpd-mat-img { width: 96px; } .lkpd-mat-photo { width: 88px; height: 66px; } .lkpd-mat-svg { width: 96px; }
+  .lkpd-mat-qty { width: auto; } .lkpd-mat-table td, .lkpd-mat-table th { padding: 8px; }
+}
+@media print { .lkpd-mat-photo { width: 90px; height: 66px; } }

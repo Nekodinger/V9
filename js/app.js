@@ -3,7 +3,7 @@
    ------------------------------------------------------------
    Perubahan utama dari V7:
    - Tidak ada lagi API key pengguna. Semua panggilan AI lewat server
-     (/api/ai, Claude Haiku 5.5 untuk tutor, Claude Opus 5.5 untuk
+     (/api/ai, model cepat untuk tutor, model besar untuk
      simulasi) dengan token akses yang diberikan server setelah siswa
      lolos gerbang (kode sesi kelas / kode mandiri / kode eksplorasi).
    - Backend /api/backend (Vercel + PostgreSQL Supabase) menggantikan
@@ -1371,7 +1371,7 @@ function renderEksVariantContent(ex, key) {
 // (bukan lagi di kertas terpisah seperti tabel contoh statis di atas).
 // Klik "Simpan Data" mem-POST ke backend (mode "eksperimen_data_save"):
 // data ditulis ke spreadsheet bersama (satu sheet per siswa) DAN, kalau
-// AI (Claude Haiku 5.5 di server) memeriksa kewajaran datanya dan memberi
+// AI di server memeriksa kewajaran datanya dan memberi
 // umpan balik singkat - baik status simpan maupun umpan balik ditampilkan
 // lokal tepat di bawah tombol (bukan ke #generate-status yang jauh),
 // mengikuti pola status-lokal yang sudah dipakai "Edit Simulasi Ini" di
@@ -1695,14 +1695,15 @@ function renderVlabApparatusSVG() {
       <!-- Kawat sirkuit netral: catu daya -> amperemeter -> klem kiri, dan
            klem kanan -> kembali ke catu daya. Digambar dulu supaya nanti
            tertutup badan amperemeter & kotak catu daya di ujung-ujungnya. -->
-      <path class="vlab-wire-flow" d="M26,178 L26,105 L41,105 M89,105 L125,105 M340,105 L365,105 L365,150 L66,150 L66,178"
-        fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linejoin="round"/>
+      <g class="vlab-part" data-part="leads"><path class="vlab-wire-flow" d="M26,178 L26,105 L41,105 M89,105 L125,105 M340,105 L365,105 L365,150 L66,150 L66,178"
+        fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linejoin="round"/></g>
 
       <!-- Kawat uji (dijepit crocodile clip di kedua ujung, melewati celah
            magnet) - digambar SEBELUM magnet supaya bagian yang "masuk" ke
            dalam blok magnet otomatis tertutup, hanya terlihat di celahnya. -->
-      <path class="vlab-wire-flow" d="M125,105 L340,105" fill="none" stroke="#cc3333" stroke-width="3.5" stroke-linecap="round"/>
+      <g class="vlab-part" data-part="wire"><path class="vlab-wire-flow" d="M125,105 L340,105" fill="none" stroke="#cc3333" stroke-width="3.5" stroke-linecap="round"/></g>
 
+      <g class="vlab-part" data-part="magnets">
       <!-- Magnet Magnadur (N kiri, S kanan) di atas yoke besi lunak -->
       <rect x="188" y="83" width="26" height="45" rx="3" fill="#b23b3b"/>
       <text x="201" y="109" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="700">N</text>
@@ -1710,6 +1711,9 @@ function renderVlabApparatusSVG() {
       <text x="263" y="109" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="700">S</text>
       <rect x="178" y="128" width="108" height="8" fill="var(--muted)"/>
 
+      </g>
+
+      <g class="vlab-part" data-part="balance">
       <!-- Neraca timbang elektronik (top-pan balance) berbentuk piringan bundar -->
       <ellipse cx="232" cy="136" rx="88" ry="9" fill="var(--panel)" stroke="var(--border)" stroke-width="1.3"/>
       <rect x="157" y="142" width="150" height="55" rx="8" fill="var(--panel-light)" stroke="var(--border)" stroke-width="1.5"/>
@@ -1717,6 +1721,9 @@ function renderVlabApparatusSVG() {
       <text id="vlab-balance-display" x="230" y="175" font-family="'Courier New', monospace" font-size="14" fill="#3ee879" text-anchor="middle">0,00 g</text>
       <text x="232" y="212" font-size="8.5" fill="var(--muted)" text-anchor="middle">${t("vlab.diagram.balance")}</text>
 
+      </g>
+
+      <g class="vlab-part" data-part="wire">
       <!-- Klem (clamp) kiri berdiri di meja, memegang kawat lewat crocodile clip -->
       <line x1="125" y1="105" x2="125" y2="175" stroke="var(--muted)" stroke-width="3" stroke-linecap="round"/>
       <rect x="117" y="175" width="16" height="6" rx="2" fill="var(--muted)"/>
@@ -1731,6 +1738,9 @@ function renderVlabApparatusSVG() {
       <path d="M332,98 L340,105 L332,112" stroke="var(--text)" stroke-width="2" fill="none" stroke-linecap="round"/>
       <path d="M348,98 L340,105 L348,112" stroke="var(--text)" stroke-width="2" fill="none" stroke-linecap="round"/>
 
+      </g>
+
+      <g class="vlab-part" data-part="ammeter">
       <!-- Amperemeter -->
       <circle cx="65" cy="105" r="24" fill="var(--panel)" stroke="var(--border)" stroke-width="2"/>
       <line x1="65" y1="89" x2="65" y2="84" stroke="var(--muted)" stroke-width="1.5"/>
@@ -1742,6 +1752,9 @@ function renderVlabApparatusSVG() {
       <circle cx="65" cy="105" r="3" fill="var(--text)"/>
       <text x="65" y="96" font-size="8" fill="var(--muted)" text-anchor="middle">A</text>
 
+      </g>
+
+      <g class="vlab-part" data-part="supply">
       <!-- Catu daya (variable supply) dengan terminal +/- -->
       <rect x="12" y="178" width="68" height="40" rx="5" fill="var(--panel-light)" stroke="var(--border)" stroke-width="1.5"/>
       <line x1="20" y1="208" x2="64" y2="186" stroke="var(--accent)" stroke-width="1.8"/>
@@ -1751,6 +1764,8 @@ function renderVlabApparatusSVG() {
       <circle cx="66" cy="178" r="3.5" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5"/>
       <text x="66" y="171" font-size="9" fill="var(--text)" text-anchor="middle">-</text>
       <text x="46" y="231" font-size="8.5" fill="var(--muted)" text-anchor="middle">${t("vlab.diagram.supply")}</text>
+
+      </g>
 
       <!-- Inset "plan view": posisi kutub magnet dilihat dari atas + arah medan -->
       <rect x="320" y="8" width="86" height="62" rx="6" fill="var(--panel-light)" stroke="var(--border)" stroke-width="1.3"/>
@@ -2242,7 +2257,7 @@ document.getElementById("pf-build-btn").addEventListener("click", () => {
   document.getElementById("final-prompt").value = prompt;
 });
 
-/* ---------------- Generate simulasi (Claude Opus 5.5, streaming) ----------------
+/* ---------------- Generate simulasi (streaming) ----------------
    Teks kode di-stream dari server sehingga siswa melihat kemajuan nyata
    (bukan menunggu 60 detik lalu timeout seperti Apps Script di V7). Jika
    server menghentikan keluaran karena batas waktu/token, tombol "Lanjutkan"

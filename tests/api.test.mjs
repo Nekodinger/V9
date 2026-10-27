@@ -46,7 +46,7 @@ const DEV_A = "d_aaaaaaaaaaaaaaaaaaaaaaaa", DEV_B = "d_bbbbbbbbbbbbbbbbbbbbbbbb"
 await test("health reports config", async () => {
   const r = await fetch(BASE + "/api/health"); const d = await r.json();
   assert.equal(d.ok, true); assert.equal(d.ai, true); assert.equal(d.explore, true);
-  assert.equal(d.models.chat, "claude-haiku-5-5"); assert.equal(d.models.sim, "claude-opus-5-5");
+  assert.equal(d.models, undefined, "model names are not exposed publicly");
 });
 await test("teacher registers students into groups with unique PINs", async () => {
   const no = await api({ mode: "teacher_accounts_add", controlCode: "x", lines: [{ name: "A", className: "B" }] });
@@ -252,6 +252,37 @@ await test("end session -> student keeps token, sync says not in session", async
   assert.equal((await api({ mode: "quiz_submit", token: tok2, code: classCode, quizId, answers: {} })).status, 409);
   const after = await aiStream({ mode: "chat", token: tok2, topic: "Magnetic Fields", message: "hai" });
   assert.equal(after.data.code, "CLASS_ONLY", "AI closes when the class session ends");
+});
+await test("bulk: move to class re-keys answers, move to group, delete", async () => {
+  const add = await api({ mode: "teacher_accounts_add", controlCode: T, lines: [
+    { name: "Eka", className: "X-1", group: "G1" }, { name: "Fajar", className: "X-1", group: "G1" }, { name: "Gita", className: "X-2", group: "" }] });
+  assert.equal(add.data.created.length, 3);
+  const eka = (await api({ mode: "student_login", name: "Eka", pin: add.data.created[0].pin })).data.token;
+  assert.equal((await api({ mode: "record_event", token: eka, topicId: MF, kind: "latihan", item: "q1", payload: { answer: "A" }, score: 1 })).status, 200);
+  const ev0 = await api({ mode: "teacher_student_detail", controlCode: T, studentId: "Eka (X-1)" });
+  assert.equal(ev0.data.events.length, 1);
+  assert.equal((await api({ mode: "teacher_accounts_bulk", controlCode: T, studentIds: [], action: "delete" })).status, 400);
+  const mv = await api({ mode: "teacher_accounts_bulk", controlCode: T, studentIds: ["Eka (X-1)", "Fajar (X-1)"], action: "move", className: "X-2", groupName: "G9" });
+  assert.deepEqual(mv.data.done.sort(), ["Eka (X-2)", "Fajar (X-2)"]);
+  const l = await api({ mode: "teacher_accounts", controlCode: T });
+  const g9 = l.data.groups.find(g => g.name === "G9" && g.className === "X-2");
+  assert.ok(g9 && g9.leaderId === "Eka (X-2)", "first moved student leads the new group");
+  assert.equal(l.data.accounts.filter(a => a.groupId === g9.groupId).length, 2);
+  assert.ok(!l.data.accounts.some(a => a.studentId === "Eka (X-1)"));
+  assert.equal((await api({ mode: "student_me", token: eka })).status, 401, "old token invalid after class move");
+  const ev1 = await api({ mode: "teacher_student_detail", controlCode: T, studentId: "Eka (X-2)" });
+  assert.equal(ev1.data.events.length, 1, "answers move with the student");
+  assert.equal(ev1.data.student.className, "X-2");
+  const dup = await api({ mode: "teacher_accounts_add", controlCode: T, lines: [{ name: "Gita", className: "X-1", group: "" }] });
+  const gx = await api({ mode: "teacher_accounts_bulk", controlCode: T, studentIds: ["Gita (X-2)"], action: "move", className: "X-1" });
+  assert.equal(gx.data.skipped.length, 1, "name clash in target class is skipped");
+  const ng = await api({ mode: "teacher_accounts_bulk", controlCode: T, studentIds: ["Fajar (X-2)"], action: "move", groupName: "" });
+  assert.deepEqual(ng.data.done, ["Fajar (X-2)"]);
+  const del = await api({ mode: "teacher_accounts_bulk", controlCode: T, studentIds: ["Eka (X-2)", "Fajar (X-2)", "Gita (X-2)", "Gita (X-1)"], action: "delete" });
+  assert.equal(del.data.done.length, 4);
+  const l2 = await api({ mode: "teacher_accounts", controlCode: T });
+  assert.ok(!l2.data.accounts.some(a => ["Eka", "Fajar", "Gita"].includes(a.name)));
+  assert.ok(dup.data.created.length === 1);
 });
 await test("foreign origin rejected, delete student removes account", async () => {
   assert.equal((await api({ mode: "health" }, { origin: "https://evil.example" })).status, 403);

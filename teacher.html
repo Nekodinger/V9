@@ -151,6 +151,7 @@
               <li data-i18n="acc.howto.2">Siswa membuka situs, pilih "Saya siswa", lalu ketik nama dan PIN.</li>
               <li data-i18n="acc.howto.3">Materi dan Latihan Soal dikerjakan sendiri-sendiri. Eksperimen dan Makerspace dikerjakan kelompok di perangkat ketua; anggota melihat hasilnya (baca saja).</li>
               <li data-i18n="acc.howto.4">Kalau ketua lupa menutup perangkat lama, klik "Lepas kunci perangkat" pada kelompoknya.</li>
+              <li data-i18n="acc.howto.5">Untuk menghapus atau memindahkan siswa, centang siswanya (atau centang nama kelompok untuk memilih satu kelompok), lalu pilih aksi dan klik Terapkan.</li>
             </ol>
           </div>
         </div>
@@ -165,6 +166,21 @@
               <button type="button" class="btn btn-ghost btn-small" id="acc-refresh-btn" data-i18n="teacher.records.refresh">Muat ulang</button>
             </div>
             <p class="muted small" id="acc-status"></p>
+            <div class="acc-bulk" id="acc-bulk">
+              <label class="acc-check"><input type="checkbox" id="acc-select-all"> <span data-i18n="acc.bulk.all">Pilih semua</span></label>
+              <span class="acc-bulk-count" id="acc-bulk-count">0 dipilih</span>
+              <select id="acc-bulk-action" aria-label="Aksi">
+                <option value="" data-i18n="acc.bulk.choose">Pilih aksi...</option>
+                <option value="group" data-i18n="acc.bulk.togroup">Pindahkan ke kelompok</option>
+                <option value="class" data-i18n="acc.bulk.toclass">Pindahkan ke kelas</option>
+                <option value="delete" data-i18n="acc.bulk.delete">Hapus siswa</option>
+              </select>
+              <input type="text" id="acc-bulk-class" list="acc-bulk-class-list" maxlength="20" hidden data-i18n-placeholder="acc.bulk.class.ph" placeholder="Kelas tujuan, misal XII IPA 2">
+              <datalist id="acc-bulk-class-list"></datalist>
+              <input type="text" id="acc-bulk-group" list="acc-bulk-group-list" maxlength="40" hidden data-i18n-placeholder="acc.bulk.group.ph" placeholder="Nama kelompok (kosongkan = tanpa kelompok)">
+              <datalist id="acc-bulk-group-list"></datalist>
+              <button type="button" class="btn btn-primary btn-small" id="acc-bulk-apply" disabled data-i18n="acc.bulk.apply">Terapkan</button>
+            </div>
             <div id="acc-groups"></div>
           </div>
         </div>
@@ -209,7 +225,7 @@
         <div>
           <div class="t-card">
             <h3 data-i18n="quiz.section.title2">Bank soal</h3>
-            <p class="t-card-desc" data-i18n="quiz.section.desc2">Tulis soal manual atau buat otomatis dengan AI (Claude Haiku 5.5), simpan ke bank, lalu publikasikan ke sesi kelas yang sedang aktif.</p>
+            <p class="t-card-desc" data-i18n="quiz.section.desc2">Tulis soal manual atau buat otomatis dengan AI, simpan ke bank, lalu publikasikan ke sesi kelas yang sedang aktif.</p>
             <label><span data-i18n="quiz.topic.label">Topik Kuis</span><select id="quiz-topic-select"></select></label>
             <div class="t-row">
               <label><span data-i18n="quiz.generate.count.label">Jumlah soal (maks 10)</span><input type="number" id="quiz-gen-count" min="1" max="10" value="5"></label>

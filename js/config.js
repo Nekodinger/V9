@@ -1,7 +1,7 @@
 /* ============================================================
    config.js - konfigurasi publik Emergent
    ------------------------------------------------------------
-   TIDAK ADA RAHASIA DI FILE INI. API key Claude, koneksi database,
+   TIDAK ADA RAHASIA DI FILE INI. API key AI, koneksi database,
    kode Panel Guru, kode belajar mandiri, dan kode eksplorasi semuanya
    disimpan di Environment Variables Vercel (lihat docs/SETUP.md).
 

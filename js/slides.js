@@ -1,7 +1,7 @@
 /* ============================================================
    slides.js - penampil slide materi (tab Materi)
    ------------------------------------------------------------
-   Menampilkan deck format Claude Slides (kanvas 1920x1080, style inline)
+   Menampilkan deck format slide (kanvas 1920x1080, style inline)
    langsung di halaman:
    - kanvas diskalakan mengikuti lebar kontainer (tajam, bukan gambar),
    - <x-embed> (animasi canvas) dijalankan sebagai iframe sandbox,

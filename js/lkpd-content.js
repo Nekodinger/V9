@@ -13,7 +13,9 @@
 
    Bentuk item section (field bertipe {id,en} diterjemahkan lewat trContent):
      info      {title, html}
-     materials {title, items:[{n, note}], kits?:[{name, code, note, url, urlLabel}], footnote?}
+     materials {title, items:[{n, note, qty?, photo?}], kits?:[{name, code, note, url, urlLabel}], footnote?}
+               photo = kunci LKPD_PHOTOS, atau "svg:vlab" untuk ilustrasi susunan neraca arus.
+               Jika ada item dengan photo/qty, daftar ditampilkan sebagai tabel No | Alat | Jumlah | Gambar.
      steps     {title, items:[{h}]}
      safety    {title, items:[{h}]}
      vars      {title, desc, fields:[{key, label, unit, toSI, fixed?, hint}]}
@@ -27,6 +29,28 @@
    ============================================================ */
 
 const LKPD_B = (idText, enText) => ({ id: idText, en: enText });
+
+// Foto alat dari Wikimedia Commons (lisensi bebas; atribusi ditampilkan di bawah tabel).
+// Dimuat langsung dari server gambar Wikimedia (thumbnail 330 px).
+const LKPD_PHOTO_BASE = "https://thumb.wikimedia.org/wikipedia/commons/thumb/";
+const LKPD_PHOTOS = {
+  kitchenScale: { src: "c/c6/Kitchenscale.jpg/330px-Kitchenscale.jpg", file: "Kitchenscale.jpg", by: "Sarcyn", lic: "CC BY-SA 3.0" },
+  hddMagnet:    { src: "4/4d/Neodymag.jpg/330px-Neodymag.jpg", file: "Neodymag.jpg", by: "Bloodshedder", lic: "Public domain" },
+  enamelWire:   { url: "https://upload.wikimedia.org/wikipedia/commons/5/51/Enameled-Round-Copper-Wire_32510-360x480_%284999892055%29.jpg", file: "Enameled-Round-Copper-Wire_32510-360x480_(4999892055).jpg", by: "Emilian Robert Vicol", lic: "CC BY 2.0" },
+  aaBattery:    { src: "6/6d/Panasonic_Power_Alkaline-_AA_Batery.jpg/330px-Panasonic_Power_Alkaline-_AA_Batery.jpg", file: "Panasonic_Power_Alkaline-_AA_Batery.jpg", by: "Mr Yukio", lic: "CC BY-SA 4.0" },
+  batteryHolder:{ src: "5/56/6x_AA_battery_holder_with_DC_plug.jpg/330px-6x_AA_battery_holder_with_DC_plug.jpg", file: "6x_AA_battery_holder_with_DC_plug.jpg", by: "Limor Fried", lic: "CC BY 2.0" },
+  crocLeads:    { src: "e/e2/Jumper_Wires_with_Crocodile_Clips.jpg/330px-Jumper_Wires_with_Crocodile_Clips.jpg", file: "Jumper_Wires_with_Crocodile_Clips.jpg", by: "oomlout", lic: "CC BY-SA 2.0" },
+  paperClip:    { src: "5/53/Paper-clip.jpg/330px-Paper-clip.jpg", file: "Paper-clip.jpg", by: "Gangodit", lic: "CC BY-SA 4.0" },
+  multimeter:   { src: "3/3c/Blue_digital_multimeter.jpg/330px-Blue_digital_multimeter.jpg", file: "Blue_digital_multimeter.jpg", by: "Publunch", lic: "Public domain" },
+  ruler:        { src: "1/11/Plastic_ruler.jpg/330px-Plastic_ruler.jpg", file: "Plastic_ruler.jpg", by: "Corn cheese", lic: "CC0" },
+  tape:         { src: "0/02/A_Roll_of_Masking_Tape_%2832410677827%29.jpg/330px-A_Roll_of_Masking_Tape_%2832410677827%29.jpg", file: "A_Roll_of_Masking_Tape_(32410677827).jpg", by: "HireAHelper", lic: "CC BY 2.0" },
+  labBalance:   { src: "2/2d/Balance_Kern.jpg/330px-Balance_Kern.jpg", file: "Balance_Kern.jpg", by: "Karelj", lic: "Public domain" },
+  dcSupply:     { src: "9/90/Bench_power_supply.jpg/330px-Bench_power_supply.jpg", file: "Bench_power_supply.jpg", by: "Derrick Parker", lic: "CC0" },
+  ammeter:      { src: "e/e7/Ammeter.jpg/330px-Ammeter.jpg", file: "Ammeter.jpg", by: "Anders Jonsson", lic: "CC BY-SA 3.0" },
+  bananaLead:   { src: "a/ae/Test_lead_banana-croco.JPG/330px-Test_lead_banana-croco.JPG", file: "Test_lead_banana-croco.JPG", by: "Dmitry G", lic: "Public domain" },
+  retortStand:  { src: "c/c5/Retort_stand_with_a_clamp.jpg/330px-Retort_stand_with_a_clamp.jpg", file: "Retort_stand_with_a_clamp.jpg", by: "Tsaenmai", lic: "CC BY-SA 4.0" },
+  caliper:      { src: "8/87/Vernier_caliper.jpg/330px-Vernier_caliper.jpg", file: "Vernier_caliper.jpg", by: "Lgreen", lic: "CC BY 2.5" }
+};
 
 /* ---------- Bagian yang dipakai bersama kedua mode ---------- */
 const LKPD_MAGNETIC_GOAL = {
@@ -171,16 +195,19 @@ const LKPD_MAGNETIC_SIMPLE = {
       type: "materials",
       title: LKPD_B("2. Alat & Bahan (centang jika sudah siap)", "2. Materials (tick when ready)"),
       items: [
-        { n: LKPD_B("Timbangan digital dapur (ketelitian 0,1 g) - lebih baik timbangan saku 0,01 g", "Digital kitchen scale (0.1 g resolution) - a 0.01 g pocket scale is better"),
-          note: LKPD_B("Bisa dibeli murah di toko online/toko kue.", "Cheap to buy online or at a baking supply shop.") },
-        { n: LKPD_B("2 magnet neodymium (dilepas dari hard disk bekas, atau magnet kotak kecil)", "2 neodymium magnets (taken from an old hard disk, or small block magnets)"),
-          note: LKPD_B("Magnet speaker/kulkas juga bisa, tetapi lebih lemah sehingga $\\Delta m$ lebih kecil.", "Speaker/fridge magnets also work but are weaker, giving a smaller $\\Delta m$.") },
-        { n: LKPD_B("Pelat baja tipis (tutup kaleng biskuit atau penjepit besi) sebagai dudukan magnet", "Thin steel plate (biscuit-tin lid or an iron bracket) as the magnet holder"), note: null },
-        { n: LKPD_B("Kawat tembaga email (dari dinamo/trafo/kipas bekas) untuk kumparan kecil 10-20 lilitan", "Enamelled copper wire (from an old dynamo/transformer/fan) for a small coil of 10-20 turns"),
-          note: LKPD_B("Kerik ujung kawat dengan amplas agar kontaknya baik.", "Scrape the wire ends with sandpaper for good contact.") },
-        { n: LKPD_B("Baterai AA + tempat baterai, kabel penjepit buaya, klip kertas sebagai saklar", "AA batteries + holder, crocodile-clip leads, a paper clip as a switch"), note: null },
-        { n: LKPD_B("Multimeter digital murah (mode arus DC) untuk mengukur $I$", "Cheap digital multimeter (DC current mode) to measure $I$"), note: null },
-        { n: LKPD_B("Penggaris, lakban, tumpukan buku atau kardus sebagai penyangga kumparan", "Ruler, tape, a stack of books or cardboard to support the coil"), note: null }
+        { n: LKPD_B("Timbangan digital dapur (ketelitian 0,1 g); lebih baik timbangan saku 0,01 g", "Digital kitchen scale (0.1 g resolution); a 0.01 g pocket scale is better"),
+          note: LKPD_B("Bisa dibeli murah di toko online/toko kue.", "Cheap to buy online or at a baking supply shop."), qty: LKPD_B("1 buah", "1"), photo: "kitchenScale" },
+        { n: LKPD_B("Magnet neodymium dari hard disk bekas, lengkap dengan pelat bajanya", "Neodymium magnets from an old hard disk, with their steel bracket"),
+          note: LKPD_B("Pelat baja bawaan dipakai sebagai dudukan. Bisa diganti magnet kotak kecil di atas tutup kaleng biskuit; magnet speaker/kulkas lebih lemah sehingga $\\Delta m$ lebih kecil.", "The original steel bracket is the holder. Small block magnets on a biscuit-tin lid also work; speaker/fridge magnets are weaker, giving a smaller $\\Delta m$."), qty: LKPD_B("2 buah", "2"), photo: "hddMagnet" },
+        { n: LKPD_B("Kawat tembaga email untuk kumparan kecil 10-20 lilitan", "Enamelled copper wire for a small coil of 10-20 turns"),
+          note: LKPD_B("Bisa diambil dari dinamo/trafo/kipas bekas. Kerik ujungnya dengan amplas agar kontaknya baik.", "Can be salvaged from an old dynamo/transformer/fan. Scrape the ends with sandpaper for good contact."), qty: LKPD_B("± 2 m", "about 2 m"), photo: "enamelWire" },
+        { n: LKPD_B("Baterai AA 1,5 V", "1.5 V AA batteries"), note: null, qty: LKPD_B("2-4 buah", "2-4"), photo: "aaBattery" },
+        { n: LKPD_B("Tempat baterai AA", "AA battery holder"), note: null, qty: LKPD_B("1 buah", "1"), photo: "batteryHolder" },
+        { n: LKPD_B("Kabel penjepit buaya", "Crocodile-clip leads"), note: null, qty: LKPD_B("4 buah", "4"), photo: "crocLeads" },
+        { n: LKPD_B("Klip kertas sebagai saklar", "Paper clip as a switch"), note: null, qty: LKPD_B("1 buah", "1"), photo: "paperClip" },
+        { n: LKPD_B("Multimeter digital (mode arus DC) untuk mengukur $I$", "Digital multimeter (DC current mode) to measure $I$"), note: null, qty: LKPD_B("1 buah", "1"), photo: "multimeter" },
+        { n: LKPD_B("Penggaris", "Ruler"), note: LKPD_B("Untuk mengukur panjang $L$ sisi kumparan.", "To measure the coil side length $L$."), qty: LKPD_B("1 buah", "1"), photo: "ruler" },
+        { n: LKPD_B("Lakban, plus tumpukan buku atau kardus sebagai penyangga kumparan", "Tape, plus a stack of books or cardboard to support the coil"), note: null, qty: LKPD_B("secukupnya", "as needed"), photo: "tape" }
       ],
       footnote: LKPD_B(
         "Tips guru: uji dulu satu set sebelum dipakai di kelas. Jika $\\Delta m$ terlalu kecil, tambah jumlah lilitan atau gunakan magnet yang lebih kuat; besar $B$ pada celah magnet bekas tidak diketahui sebelumnya, justru itulah yang diukur.",
@@ -313,12 +340,13 @@ const LKPD_MAGNETIC_LAB = {
       title: LKPD_B("2. Alat & Bahan (centang jika sudah siap)", "2. Apparatus (tick when ready)"),
       items: [
         { n: LKPD_B("Neraca arus (current balance): rumah magnet/yoke besi dengan sepasang magnet, plus papan/loop kawat dengan panjang $L$ diketahui", "Current balance: magnet assembly/iron yoke with a pair of magnets, plus wire boards/loops of known length $L$"),
-          note: LKPD_B("Lihat contoh kit di bawah.", "See the example kits below.") },
-        { n: LKPD_B("Neraca elektronik (top-pan balance) dengan ketelitian minimal 0,01 g", "Electronic top-pan balance with resolution of at least 0.01 g"), note: null },
-        { n: LKPD_B("Catu daya DC yang dapat diatur, sampai sekitar 5-6 A", "Variable DC power supply, up to about 5-6 A"), note: null },
-        { n: LKPD_B("Amperemeter (sampai 5 A) atau multimeter digital mode arus, kabel banana", "Ammeter (up to 5 A) or a digital multimeter in current mode, banana leads"), note: null },
-        { n: LKPD_B("Statif/alas dan batang penyangga untuk menahan papan kawat tetap di celah magnet", "Stand/base and support rod to hold the wire board fixed in the magnet gap"), note: null },
-        { n: LKPD_B("Penggaris atau jangka sorong untuk memverifikasi $L$", "Ruler or vernier callipers to verify $L$"), note: null }
+          note: LKPD_B("Gambar: ilustrasi susunan. Lihat contoh kit di bawah tabel.", "Picture: set-up illustration. See the example kits below the table."), qty: LKPD_B("1 set", "1 set"), photo: "svg:vlab" },
+        { n: LKPD_B("Neraca elektronik (top-pan balance), ketelitian minimal 0,01 g", "Electronic top-pan balance, resolution of at least 0.01 g"), note: null, qty: LKPD_B("1 buah", "1"), photo: "labBalance" },
+        { n: LKPD_B("Catu daya DC yang dapat diatur, sampai sekitar 5-6 A", "Variable DC power supply, up to about 5-6 A"), note: null, qty: LKPD_B("1 buah", "1"), photo: "dcSupply" },
+        { n: LKPD_B("Amperemeter (sampai 5 A) atau multimeter digital mode arus", "Ammeter (up to 5 A) or a digital multimeter in current mode"), note: null, qty: LKPD_B("1 buah", "1"), photo: "ammeter" },
+        { n: LKPD_B("Kabel penghubung (banana / penjepit buaya)", "Connecting leads (banana / crocodile clip)"), note: null, qty: LKPD_B("3-4 buah", "3-4"), photo: "bananaLead" },
+        { n: LKPD_B("Statif/alas dan batang penyangga untuk menahan papan kawat tetap di celah magnet", "Stand/base and support rod to hold the wire board fixed in the magnet gap"), note: null, qty: LKPD_B("1 set", "1 set"), photo: "retortStand" },
+        { n: LKPD_B("Jangka sorong atau penggaris untuk memverifikasi $L$", "Vernier callipers or a ruler to verify $L$"), note: null, qty: LKPD_B("1 buah", "1"), photo: "caliper" }
       ],
       kits: [
         { name: LKPD_B("PASCO Current Balance EM-8607", "PASCO Current Balance EM-8607"),
@@ -494,10 +522,11 @@ const LKPD_MAGNETIC_VIRTUAL = {
       type: "steps",
       title: LKPD_B("Langkah Kerja (centang setiap langkah yang selesai)", "Procedure (tick each step when done)"),
       items: [
-        { h: LKPD_B("Amati diagram alat: kawat uji melewati celah sepasang magnet yang bertumpu di atas neraca elektronik. Panjang kawat di dalam medan $L$ sudah tertulis di bawah diagram.", "Study the diagram: the test wire passes through the gap of a pair of magnets resting on an electronic balance. The wire length in the field, $L$, is given below the diagram.") },
+        { h: LKPD_B("Rakit alat virtual di meja kerja: pilih (ketuk atau seret) setiap alat sesuai urutan, termasuk menekan tare neraca setelah magnet terpasang. Kawat uji harus melewati celah magnet tanpa menyentuhnya.", "Assemble the virtual apparatus on the workbench: pick (tap or drag) each item in order, including taring the balance once the magnets are on it. The test wire must pass through the magnet gap without touching it.") },
+        { h: LKPD_B("Amati rangkaian yang sudah jadi: kawat uji melewati celah sepasang magnet yang bertumpu di atas neraca elektronik. Panjang kawat di dalam medan $L$ tertulis di bawah diagram.", "Study the finished set-up: the test wire passes through the gap of a pair of magnets resting on an electronic balance. The wire length in the field, $L$, is given below the diagram.") },
         { h: LKPD_B("Pilih nilai arus $I$, lalu klik <strong>Baca Neraca</strong>. Pembacaan otomatis masuk ke kolom kosong pertama pada baris arus itu.", "Choose a current $I$, then click <strong>Read Balance</strong>. The reading goes into the first empty cell of that current's row.") },
         { h: LKPD_B("Ulangi sampai setiap arus punya tiga pembacaan ($\\Delta m_1, \\Delta m_2, \\Delta m_3$). Pembacaan sedikit berbeda setiap kali, seperti alat sungguhan.", "Repeat until every current has three readings ($\\Delta m_1, \\Delta m_2, \\Delta m_3$). Readings vary slightly each time, like a real instrument.") },
-        { h: LKPD_B("Klik <strong>Simpan Data</strong> agar datamu tersimpan dan diperiksa kewajarannya oleh AI.", "Click <strong>Save Data</strong> to store your data and have its plausibility checked by the AI.") },
+        { h: LKPD_B("Klik <strong>Simpan Data</strong> agar datamu tersimpan (saat belajar di kelas, kewajarannya juga diperiksa AI).", "Click <strong>Save Data</strong> to store your data (in a class session the AI also checks its plausibility).") },
         { h: LKPD_B("Gunakan grafik untuk menjawab soal hitungan dan soal pemahaman di bawah.", "Use the graph to answer the calculation and understanding questions below.") }
       ]
     },

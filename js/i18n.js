@@ -164,7 +164,7 @@ const I18N_STRINGS = {
   "lab.editfollowup.limitreached": { id: "Batas {{max}}x edit lanjutan untuk simulasi ini sudah tercapai - tekan Generate untuk membuat versi baru.", en: "You've reached the {{max}}x follow-up edit limit for this simulation - press Generate to create a new version." },
   "lab.editfollowup.needsim": { id: "Belum ada simulasi untuk diedit - tekan Generate atau Coba Mode Demo dulu.", en: "There's no simulation to edit yet - press Generate or Try Demo Mode first." },
   "lab.editfollowup.needinstruction": { id: "Tulis dulu instruksi editnya, misalnya bagian apa yang ingin diubah/ditambah.", en: "Write your edit instruction first, e.g. what part you want to change or add." },
-  "lab.editfollowup.loading": { id: "Menerapkan edit ke-{{n}} dari {{max}}, mohon tunggu (biasanya 10-30 detik, kadang lebih lama kalau server Gemini sedang sibuk)...", en: "Applying edit {{n}} of {{max}}, please wait (usually 10-30 seconds, sometimes longer if Gemini's servers are busy)..." },
+  "lab.editfollowup.loading": { id: "Menerapkan edit ke-{{n}} dari {{max}}, mohon tunggu (biasanya 10-30 detik)...", en: "Applying edit {{n}} of {{max}}, please wait (usually 10-30 seconds)..." },
   "lab.editfollowup.success": { id: "Edit berhasil diterapkan pada simulasi.", en: "Edit applied to the simulation successfully." },
   "lab.editfollowup.retryhint": { id: " Coba edit lagi dengan instruksi yang lebih sederhana.", en: " Try editing again with a simpler instruction." },
   "lab.editfollowup.failed": { id: "Gagal menerapkan edit: ", en: "Failed to apply edit: " },

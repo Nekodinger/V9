@@ -4,7 +4,7 @@
    ------------------------------------------------------------
    Semua teks di bawah ditulis manual (bukan hasil salin-tempel
    dari buku manapun). Dipakai dengan dua cara oleh js/chatbot.js:
-   1. Kalau AI server tersedia (V9: Claude Haiku 5.5): dikirim sebagai "kbContext"
+   1. Kalau AI server tersedia (V9): dikirim sebagai "kbContext"
       (bahan acuan) ke tutor AI lewat backend, supaya jawaban AI
       tetap konsisten dengan materi yang sudah diajarkan di situs.
    2. Kalau AI tidak tersedia: dipakai langsung sebagai skrip

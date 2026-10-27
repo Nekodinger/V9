@@ -1,8 +1,8 @@
 /* ============================================================
    chatbot.js - Tutor Fisika (gaya Socratic)
    ------------------------------------------------------------
-   V9: setiap pesan dikirim ke /api/ai (mode "chat") dan dijawab Claude
-   Haiku 5.5 secara streaming (teks muncul bertahap). API key berada di
+   V9: setiap pesan dikirim ke /api/ai (mode "chat") dan dijawab AI
+   secara streaming (teks muncul bertahap). API key berada di
    server; siswa cukup punya token akses dari gerbang masuk. Bahan dari
    js/chatbot-data.js + lembar rumus topik dikirim sebagai acuan, dan soal
    latihan/kuis aktif dikirim sebagai "soal terlindungi" supaya tutor
