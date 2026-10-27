@@ -947,17 +947,17 @@ tr.acc-selected td { background: rgba(82, 95, 225, .07); }
 #records-body td:nth-child(2), #records-body td:nth-child(3) { white-space: nowrap; }
 body.drawer-open .app-toast { opacity: 0 !important; }
 
-/* Ikon geometris (garis tipis dalam ubin membulat) - pengganti angka/huruf */
-.gi { display: inline-grid; place-items: center; width: 50px; height: 50px; border-radius: 14px; flex: none; border: 1px solid rgba(11, 16, 74, .06); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 6px 14px rgba(11, 16, 74, .06); }
-.gi svg { width: 28px; height: 28px; }
-.gi-coral { color: var(--coral-ink); background: linear-gradient(150deg, #FFFFFF 0%, var(--coral-soft) 100%); }
-.gi-indigo { color: var(--indigo-deep); background: linear-gradient(150deg, #FFFFFF 0%, var(--indigo-soft) 100%); }
-.gi-plum { color: var(--plum); background: linear-gradient(150deg, #FFFFFF 0%, var(--plum-soft) 100%); }
-.gi-sky { color: var(--sky); background: linear-gradient(150deg, #FFFFFF 0%, var(--sky-soft) 100%); }
-.gate-role-btn .role-ic { width: 52px; height: 52px; }
-.gate-role-btn:hover .gi { color: #fff; background: var(--indigo); border-color: var(--indigo); }
-.gate-role-btn:hover .gi-coral { background: var(--coral); border-color: var(--coral); }
-.gate-role-btn .gi { transition: background .2s, color .2s; }
-.stage-card .gi { margin-bottom: 10px; }
-.float-card .gi { width: 46px; height: 46px; border-radius: 12px; }
-.float-card .gi svg { width: 24px; height: 24px; }
+/* Ikon garis (gaya line-icon: monokrom navy, satu aksen warna, tanpa ubin) */
+.gi { display: inline-grid; place-items: center; width: 56px; height: 56px; flex: none; color: var(--navy); }
+.gi svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.gi svg .a { stroke: var(--indigo); }
+.gi-coral svg .a { stroke: var(--coral); }
+.gi-plum svg .a { stroke: var(--plum); }
+.gi-sky svg .a { stroke: var(--sky); }
+.gi svg [fill="#fff"] { fill: var(--white); }
+.gate-role-btn .role-ic { width: 58px; height: 58px; margin-bottom: 2px; }
+.gate-role-btn .gi svg { transition: transform .25s ease; }
+.gate-role-btn:hover .gi svg { transform: translateY(-2px); }
+.gate-role-btn:hover .gi { color: var(--indigo-deep); }
+.stage-card .gi { margin-bottom: 8px; width: 54px; height: 54px; }
+.float-card .gi { width: 44px; height: 44px; }

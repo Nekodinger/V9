@@ -31,7 +31,9 @@
     <p data-i18n="gate.aside.desc">Materi, eksperimen nyata, latihan soal, dan Makerspace tempat kamu membuat simulasi sendiri bersama AI.</p>
     <figure class="gate-mascot" aria-hidden="true">
       <img src="assets/hero-3d-640.webp" alt="" width="640" height="640">
-      <div class="float-card"><span class="gi gi-indigo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6.5" width="14" height="10" rx="1.4"/><path d="M7 3.5h12.5a1 1 0 0 1 1 1V13"/><path d="M8.5 20.5h3M10 16.5v4"/><path d="m8.5 9.6 3.4 1.9-3.4 1.9z"/></svg></span><div><b data-i18n="gate.float.k">Slide interaktif</b><small data-i18n="gate.float.v">Magnetic Fields</small></div></div>
+      <div class="float-card"><span class="gi gi-indigo" aria-hidden="true"><svg class="gi-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="38" height="25" rx="1.6"/><path d="M5 9.5h38"/><circle cx="8.3" cy="7.3" r=".6"/><circle cx="10.6" cy="7.3" r=".6"/>
+<path class="a" d="M20.5 13.5l8.5 4.5-8.5 4.5z"/><path d="M10 26h28"/><circle class="a" cx="17" cy="26" r="1.6" fill="#fff"/>
+<path d="M24 30v7M16 43l8-6 8 6"/></svg></span><div><b data-i18n="gate.float.k">Slide interaktif</b><small data-i18n="gate.float.v">Magnetic Fields</small></div></div>
     </figure>
     <div class="gate-foot"><span>PjBL · Generative AI</span><span>Magnetic Fields</span><a href="teacher.html" data-i18n="gate.teacherlink.short">Panel Guru</a></div>
   </aside>
@@ -50,12 +52,16 @@
       <p class="muted" data-i18n="gate.role.desc2">Siswa masuk ke ruang belajar. Guru langsung menuju Panel Guru.</p>
       <div class="gate-role-options">
         <button type="button" id="gate-role-student-btn" class="gate-role-btn">
-          <span class="gi gi-coral role-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9 12 4.5 21.5 9 12 13.5z"/><path d="M6.5 11v4.6c0 1.6 2.5 2.9 5.5 2.9s5.5-1.3 5.5-2.9V11"/><path d="M21.5 9v5.5"/></svg></span>
+          <span class="gi gi-coral role-ic" aria-hidden="true"><svg class="gi-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 44c0-7.5 5.4-13 12-13s12 5.5 12 13"/><circle cx="24" cy="21" r="6"/>
+<path d="M12 12 24 6.5 36 12 24 17.5z" fill="#fff"/><path d="M17.5 14.6v3.4c0 1.4 2.9 2.6 6.5 2.6s6.5-1.2 6.5-2.6v-3.4"/><path class="a" d="M36 12v7"/><circle class="a" cx="36" cy="20.5" r="1.3"/>
+<path d="M14 36.5l10 2.6 10-2.6v6.8l-10 2.6-10-2.6z" fill="#fff"/><path d="M24 39.1v6.8"/></svg></span>
           <strong data-i18n="gate.role.student.title">Saya siswa</strong>
           <span class="muted" data-i18n="gate.role.student.desc4">Masuk dengan nama dan PIN dari gurumu, lalu pilih belajar di kelas atau mandiri.</span>
         </button>
         <a href="teacher.html" id="gate-role-teacher-link" class="gate-role-btn">
-          <span class="gi gi-indigo role-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.6"/><path d="M8.5 20 12 16l3.5 4"/><path d="M7 12.5l3-3 2.2 2.2L16.5 7.5"/></svg></span>
+          <span class="gi gi-indigo role-ic" aria-hidden="true"><svg class="gi-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="26" height="18" rx="1.5"/><path d="M11 25l-3 9M22 25l3 9M16.5 25v4"/>
+<path class="a" d="M8 20.5l4.5-4.5 3.5 3 6-6"/><path class="a" d="M19 13h3v3"/>
+<circle cx="38.5" cy="14" r="4"/><path d="M32 44V30.5c0-3.2 2.9-5.5 6.5-5.5S45 27.3 45 30.5V44"/><path d="M33.5 30.5 26 21"/><path d="M38.5 33v11"/></svg></span>
           <strong data-i18n="gate.role.teacher.title">Saya guru</strong>
           <span class="muted" data-i18n="gate.role.teacher.desc">Buka Panel Guru untuk memulai sesi kelas, melihat progres, dan mengekspor rekap.</span>
         </a>
@@ -84,12 +90,15 @@
       <p class="muted" data-i18n="gate.mode.desc">Pilih sesuai keadaanmu sekarang. Nanti bisa diganti di Pengaturan.</p>
       <div class="gate-role-options">
         <button type="button" id="gate-mode-class-btn" class="gate-role-btn">
-          <span class="gi gi-indigo role-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.5" r="2.8"/><circle cx="5.5" cy="16" r="2.4"/><circle cx="18.5" cy="16" r="2.4"/><path d="M10.2 9.8 7 13.8M13.8 9.8l3.2 4M8 16h8"/></svg></span>
+          <span class="gi gi-indigo role-ic" aria-hidden="true"><svg class="gi-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="4" width="20" height="13" rx="1.4"/><path class="a" d="M21.5 8l5.5 2.6-5.5 2.6z"/><path d="M24 17v3"/>
+<circle cx="10" cy="27" r="3.4"/><circle cx="24" cy="25" r="3.6"/><circle cx="38" cy="27" r="3.4"/>
+<path d="M3.5 40c0-4.2 2.9-7.2 6.5-7.2s6.5 3 6.5 7.2M17 38.5c0-4.6 3.1-7.8 7-7.8s7 3.2 7 7.8M31.5 40c0-4.2 2.9-7.2 6.5-7.2s6.5 3 6.5 7.2"/><path d="M2.5 43.5h43"/></svg></span>
           <strong data-i18n="gate.mode.class.title">Belajar di kelas</strong>
           <span class="muted" data-i18n="gate.mode.class.desc">Gurumu sedang menjalankan sesi kelas. Masukkan kode 6 huruf dari layar guru; aktivitas dan kuis mengikuti guru.</span>
         </button>
         <button type="button" id="gate-mode-self-btn" class="gate-role-btn">
-          <span class="gi gi-coral role-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11 12 4.5l8.5 6.5"/><path d="M6 9.6V19.5h12V9.6"/><path d="M10 19.5v-5h4v5"/></svg></span>
+          <span class="gi gi-coral role-ic" aria-hidden="true"><svg class="gi-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 22.5 24 7l19.5 15.5"/><path d="M9 19v24h30V19"/><path d="M33 13V7.5h4.5v9"/>
+<path class="a" d="M14.5 29.5l9.5 2.8 9.5-2.8v9.3l-9.5 2.8-9.5-2.8z" fill="#fff"/><path class="a" d="M24 32.3v9.3"/><path d="M17.5 33.2l3.5 1M27 34.2l3.5-1"/></svg></span>
           <strong data-i18n="gate.mode.self.title">Belajar mandiri</strong>
           <span class="muted" data-i18n="gate.mode.self.desc2">Belajar sendiri di rumah tanpa kode tambahan. Checkpoint tetap dikonfirmasi guru.</span>
         </button>
@@ -210,15 +219,27 @@
         <figure class="hero-figure">
           <span class="hero-blob" aria-hidden="true"></span>
           <img src="assets/hero-3d.webp" alt="" class="hero-mascot" width="960" height="960">
-          <div class="float-card fc-1"><span class="gi gi-coral" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8 20.2 7.4v9.2L12 21.2l-8.2-4.6V7.4z"/><path d="M12 12l8.2-4.6M12 12v9.2M12 12 3.8 7.4"/></svg></span><div><b data-i18n="hero.float1.k">Makerspace</b><small data-i18n="hero.float1.v">Simulasi buatanmu</small></div></div>
-          <div class="float-card fc-2"><span class="gi gi-indigo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4v7.2a3 3 0 0 0 6 0V4h4v7.2a7 7 0 0 1-14 0z"/><path d="M5 8h4M15 8h4"/></svg></span><div><b>F = BIL</b><small data-i18n="hero.float2.v">LKPD neraca arus</small></div></div>
+          <div class="float-card fc-1"><span class="gi gi-coral" aria-hidden="true"><svg class="gi-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M24 12.5 34 18v11.5L24 35l-10-5.5V18z"/><path d="M24 23.5 34 18M24 23.5V35M24 23.5 14 18"/>
+<path d="M34 18l5.6-4M14 18l-5.6-4M34 29.5l5.6 4M14 29.5l-5.6 4M24 12.5V7"/>
+<circle class="a" cx="41.6" cy="12.6" r="2.4"/><circle class="a" cx="6.4" cy="12.6" r="2.4"/><circle class="a" cx="41.6" cy="34.9" r="2.4"/><circle class="a" cx="6.4" cy="34.9" r="2.4"/><circle class="a" cx="24" cy="4.6" r="2.4"/></svg></span><div><b data-i18n="hero.float1.k">Makerspace</b><small data-i18n="hero.float1.v">Simulasi buatanmu</small></div></div>
+          <div class="float-card fc-2"><span class="gi gi-indigo" aria-hidden="true"><svg class="gi-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15h8v12a6 6 0 0 0 12 0V15h8v12a14 14 0 0 1-28 0z"/><path d="M10 20h8M30 20h8"/>
+<path class="a" d="M14 12.5C14 4.5 34 4.5 34 12.5"/><path class="a" d="M19 12.5c0-3.4 10-3.4 10 0"/></svg></span><div><b>F = BIL</b><small data-i18n="hero.float2.v">LKPD neraca arus</small></div></div>
         </figure>
       </section>
       <div class="stage-strip">
-        <div class="stage-card"><span class="gi gi-coral stage-num" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6.5" width="14" height="10" rx="1.4"/><path d="M7 3.5h12.5a1 1 0 0 1 1 1V13"/><path d="M8.5 20.5h3M10 16.5v4"/><path d="m8.5 9.6 3.4 1.9-3.4 1.9z"/></svg></span><strong data-i18n="tab.materi">Materi</strong><span class="stage-pjbl" data-i18n="stage.materi.pjbl">Pertanyaan mendasar</span><span class="muted small" data-i18n="stage.materi.desc2">31 slide interaktif dengan animasi konsep.</span></div>
-        <div class="stage-card"><span class="gi gi-indigo stage-num" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5h6"/><path d="M10 3.5v5.8L4.6 18.6a1.3 1.3 0 0 0 1.1 2h12.6a1.3 1.3 0 0 0 1.1-2L14 9.3V3.5"/><path d="M7.2 14.5h9.6"/></svg></span><strong data-i18n="tab.eksperimen">Eksperimen</strong><span class="stage-pjbl" data-i18n="stage.eksperimen.pjbl">Desain &amp; data</span><span class="muted small" data-i18n="stage.eksperimen.desc2">LKPD neraca arus: virtual, sederhana, atau laboratorium.</span></div>
-        <div class="stage-card"><span class="gi gi-plum stage-num" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.8"/><circle cx="12" cy="12" r="4.8"/><path d="m9.9 12.1 1.5 1.5 2.9-3"/></svg></span><strong data-i18n="tab.latihan">Latihan Soal</strong><span class="stage-pjbl" data-i18n="stage.latihan.pjbl">Menguji hasil</span><span class="muted small" data-i18n="stage.latihan.desc2">Soal bergaya 9702 dengan pembahasan.</span></div>
-        <div class="stage-card"><span class="gi gi-sky stage-num" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8 20.2 7.4v9.2L12 21.2l-8.2-4.6V7.4z"/><path d="M12 12l8.2-4.6M12 12v9.2M12 12 3.8 7.4"/></svg></span><strong data-i18n="tab.lab">Makerspace</strong><span class="stage-pjbl" data-i18n="stage.lab.pjbl">Produk &amp; refleksi</span><span class="muted small" data-i18n="stage.lab.desc2">Rancang prompt, AI membuat simulasimu.</span></div>
+        <div class="stage-card"><span class="gi gi-coral stage-num" aria-hidden="true"><svg class="gi-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="38" height="25" rx="1.6"/><path d="M5 9.5h38"/><circle cx="8.3" cy="7.3" r=".6"/><circle cx="10.6" cy="7.3" r=".6"/>
+<path class="a" d="M20.5 13.5l8.5 4.5-8.5 4.5z"/><path d="M10 26h28"/><circle class="a" cx="17" cy="26" r="1.6" fill="#fff"/>
+<path d="M24 30v7M16 43l8-6 8 6"/></svg></span><strong data-i18n="tab.materi">Materi</strong><span class="stage-pjbl" data-i18n="stage.materi.pjbl">Pertanyaan mendasar</span><span class="muted small" data-i18n="stage.materi.desc2">31 slide interaktif dengan animasi konsep.</span></div>
+        <div class="stage-card"><span class="gi gi-indigo stage-num" aria-hidden="true"><svg class="gi-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5.5h12M16.5 5.5v11.5L7.6 37.6A2.4 2.4 0 0 0 9.8 41h20.4a2.4 2.4 0 0 0 2.2-3.4L23.5 17V5.5"/>
+<path class="a" d="M11.6 30h16.8"/><circle class="a" cx="17" cy="35" r="1.3"/><circle class="a" cx="22" cy="33.5" r="1"/><circle class="a" cx="20" cy="24.5" r=".9"/>
+<path d="M33.5 7.5h9M35 7.5v27.5a3 3 0 0 0 6 0V7.5"/><path d="M35 14h2.5M35 18.5h2.5M35 23h2.5"/><path class="a" d="M35 27h6"/></svg></span><strong data-i18n="tab.eksperimen">Eksperimen</strong><span class="stage-pjbl" data-i18n="stage.eksperimen.pjbl">Desain &amp; data</span><span class="muted small" data-i18n="stage.eksperimen.desc2">LKPD neraca arus: virtual, sederhana, atau laboratorium.</span></div>
+        <div class="stage-card"><span class="gi gi-plum stage-num" aria-hidden="true"><svg class="gi-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="27" height="35" rx="2"/><rect x="15.5" y="5" width="12" height="6" rx="1.5" fill="#fff"/>
+<rect x="13" y="17" width="4.5" height="4.5" rx=".8"/><rect x="13" y="25.5" width="4.5" height="4.5" rx=".8"/><rect x="13" y="34" width="4.5" height="4.5" rx=".8"/>
+<path class="a" d="M13.9 19.3l1.3 1.2 2.6-3M13.9 27.8l1.3 1.2 2.6-3"/><path d="M21.5 19.3h8.5M21.5 27.8h8.5M21.5 36.3h6"/>
+<path d="M41.5 15.5l3.5 2.6-11 15.4-4.4 2 .9-4.6z" fill="#fff"/><path class="a" d="M39.4 18.5l3.5 2.6"/></svg></span><strong data-i18n="tab.latihan">Latihan Soal</strong><span class="stage-pjbl" data-i18n="stage.latihan.pjbl">Menguji hasil</span><span class="muted small" data-i18n="stage.latihan.desc2">Soal bergaya 9702 dengan pembahasan.</span></div>
+        <div class="stage-card"><span class="gi gi-sky stage-num" aria-hidden="true"><svg class="gi-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M24 12.5 34 18v11.5L24 35l-10-5.5V18z"/><path d="M24 23.5 34 18M24 23.5V35M24 23.5 14 18"/>
+<path d="M34 18l5.6-4M14 18l-5.6-4M34 29.5l5.6 4M14 29.5l-5.6 4M24 12.5V7"/>
+<circle class="a" cx="41.6" cy="12.6" r="2.4"/><circle class="a" cx="6.4" cy="12.6" r="2.4"/><circle class="a" cx="41.6" cy="34.9" r="2.4"/><circle class="a" cx="6.4" cy="34.9" r="2.4"/><circle class="a" cx="24" cy="4.6" r="2.4"/></svg></span><strong data-i18n="tab.lab">Makerspace</strong><span class="stage-pjbl" data-i18n="stage.lab.pjbl">Produk &amp; refleksi</span><span class="muted small" data-i18n="stage.lab.desc2">Rancang prompt, AI membuat simulasimu.</span></div>
       </div>
       <div class="welcome-note">
         <div><h4 data-i18n="welcome.note1.title">Tahapan bertahap</h4><p data-i18n="welcome.note1.text">Tab berikutnya terbuka setelah kamu lulus pertanyaan konfirmasi. Checkpoint Eksperimen dan Makerspace dikonfirmasi gurumu.</p></div>
