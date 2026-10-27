@@ -141,7 +141,7 @@ const I18N_STRINGS = {
   "lab.card2.title": { id: "Prompt Final (bisa kamu edit)", en: "Final Prompt (you can edit it)" },
   "lab.finalprompt.placeholder": { id: "Prompt hasil susunan akan muncul di sini. Kamu boleh mengedit langsung sebelum generate.", en: "The assembled prompt will appear here. You can edit it directly before generating." },
   "lab.generate.btn": { id: "Generate Simulasi", en: "Generate Simulation" },
-  "lab.demo.btn": { id: "Coba Mode Demo (tanpa API key)", en: "Try Demo Mode (no API key)" },
+  "lab.demo.btn": { id: "Coba Mode Demo", en: "Try Demo Mode" },
   "lab.generate.needprompt": { id: "Susun atau tulis prompt terlebih dahulu.", en: "Build or write a prompt first." },
   "lab.generate.loading": { id: "Menghubungi AI, mohon tunggu (bisa 10-30 detik)...", en: "Contacting the AI, please wait (can take 10-30 seconds)..." },
   "lab.generate.retryhint": { id: " Coba klik Generate lagi (hasil AI bisa berbeda tiap percobaan), atau sederhanakan promptnya.", en: " Try clicking Generate again (AI results can differ each time), or simplify the prompt." },
@@ -154,7 +154,7 @@ const I18N_STRINGS = {
   "lab.rerun.btn": { id: "Jalankan Ulang", en: "Run Again" },
   "lab.togglecode.view": { id: "Lihat Kode", en: "View Code" },
   "lab.togglecode.preview": { id: "Lihat Preview", en: "View Preview" },
-  "lab.download.btn": { id: "Unduh .html", en: "Download .html" },
+  "lab.download.btn": { id: "Unduh simulasi", en: "Download simulation" },
   "lab.preview.title": { id: "Preview simulasi", en: "Simulation preview" },
 
   "lab.editfollowup.title": { id: "Prompt Lanjutan (edit simulasi yang sudah jadi ini)", en: "Follow-up Prompt (edit this finished simulation)" },
@@ -171,7 +171,7 @@ const I18N_STRINGS = {
   "lab.editfollowup.failedsuffix": { id: " - coba lagi.", en: " - try again." },
 
   "check.htmltooshort": { id: "Hasil AI kosong atau terlalu pendek untuk jadi simulasi utuh.", en: "The AI result is empty or too short to be a complete simulation." },
-  "check.htmltruncated": { id: "Kode HTML sepertinya terpotong (tidak diakhiri tag </html>).", en: "The HTML code looks truncated (doesn't end with a </html> tag)." },
+  "check.htmltruncated": { id: "Simulasi sepertinya belum lengkap. Klik Lanjutkan untuk melengkapinya.", en: "The simulation looks incomplete. Click Continue to finish it." },
   "check.noscript": { id: "Kode tidak mengandung <script> sama sekali, jadi animasi/perhitungan tidak akan berjalan.", en: "The code has no <script> tag at all, so animations/calculations won't run." },
   "check.unbalancedbraces": { id: "Kode JavaScript sepertinya tidak lengkap/rusak (kurung kurawal { } tidak seimbang), kemungkinan animasi atau perhitungan tidak akan berjalan.", en: "The JavaScript code looks incomplete/broken (unbalanced { } braces), so animations or calculations may not run." },
 
@@ -241,8 +241,8 @@ const I18N_STRINGS = {
   "teacher.hero.title": { id: "Panel Guru", en: "Teacher Panel" },
   "teacher.hero.desc": { id: "Kendalikan sesi kelas, pantau progres siswa real-time, konfirmasi permintaan lanjut, dan kelola Kuis Topik - semuanya dari satu halaman.", en: "Control class sessions, monitor student progress in real time, confirm advancement requests, and manage the Topic Quiz - all from one page." },
   "teacher.login.title": { id: "Masuk Panel Guru", en: "Teacher Panel Login" },
-  "teacher.controlcode.label": { id: "Kode Kontrol Guru", en: "Teacher Control Code" },
-  "teacher.controlcode.placeholder": { id: "Kode kontrol guru", en: "Teacher control code" },
+  "teacher.controlcode.label": { id: "Kode Guru", en: "Teacher Code" },
+  "teacher.controlcode.placeholder": { id: "Ketik kode guru", en: "Type your teacher code" },
   "teacher.login.btn": { id: "Masuk", en: "Log In" },
   "teacher.session.title": { id: "Sesi Kelas", en: "Class Session" },
   "teacher.session.desc": { id: "Tentukan satu aktivitas yang wajib dikerjakan bareng semua siswa yang gabung. Siswa gabung lewat tombol Pengaturan di situs utama, masukkan kode di bawah.", en: "Set one activity that every joined student must work on together. Students join via the Settings button on the main site, entering the code below." },
@@ -265,7 +265,7 @@ const I18N_STRINGS = {
   "nav.sessiondot.title": { id: "Aktivitas kelas sekarang", en: "Current class activity" },
   "classsession.bannertext": { id: "Sesi kelas aktif - guru meminta semua mengerjakan topik: {{topic}} sekarang.", en: "Class session active - your teacher wants everyone working on the topic: {{topic}} now." },
   "classsession.wrongcode": { id: "Kode salah, atau sesi belum/sudah tidak aktif. Tanyakan gurumu.", en: "Wrong code, or the session isn't active anymore. Ask your teacher." },
-  "classsession.connectfailed": { id: "Gagal terhubung ke server: {{err}}", en: "Couldn't connect to the server: {{err}}" },
+  "classsession.connectfailed": { id: "Gagal terhubung. Periksa koneksi internet lalu coba lagi.", en: "Couldn't connect. Check your internet connection and try again." },
 
   /* ---------------- Generator prompt AI (Makerspace) ---------------- */
   "promptgen.header": { id: "Buatlah SATU file HTML lengkap dan mandiri (HTML, CSS, dan JavaScript semuanya inline dalam satu file, TANPA dependensi/CDN eksternal) yang berisi simulasi fisika interaktif tentang topik \"{{topic}}\", khususnya konsep: {{concept}}.\n\n", en: "Create ONE complete, self-contained HTML file (HTML, CSS, and JavaScript all inline in a single file, with NO external dependencies/CDNs) containing an interactive physics simulation about the topic \"{{topic}}\", specifically the concept: {{concept}}.\n\n" },
@@ -282,8 +282,8 @@ const I18N_STRINGS = {
   "promptgen.editlangdirective": { id: "Jika kamu menambah/mengubah teks yang tampil di layar, tulis dalam Bahasa Indonesia (sesuai bahasa simulasi ini sebelumnya).", en: "If you add/change any on-screen text, write it in English (matching this simulation's existing language)." },
 
   /* ---------------- Teacher panel dinamis (teacher.js) ---------------- */
-  "teacher.backend.missing": { id: "URL Backend belum diisi. Isi dulu di form login di atas (URL Apps Script Web App yang sama dengan situs utama).", en: "Backend URL isn't filled in. Fill it in the login form above first (the same Apps Script Web App URL as the main site)." },
-  "teacher.backend.connectfailed": { id: "Gagal terhubung ke backend: {{err}}", en: "Couldn't connect to the backend: {{err}}" },
+  "teacher.backend.missing": { id: "Panel Guru belum siap. Muat ulang halaman.", en: "The Teacher Panel isn't ready. Reload the page." },
+  "teacher.backend.connectfailed": { id: "Gagal terhubung. Periksa koneksi internet lalu coba lagi.", en: "Couldn't connect. Check your internet connection and try again." },
   "time.justnow": { id: "baru saja", en: "just now" },
   "time.secondsago": { id: "{{n}} detik lalu", en: "{{n}} seconds ago" },
   "time.minutesago": { id: "{{n}} menit lalu", en: "{{n}} minutes ago" },
@@ -291,7 +291,7 @@ const I18N_STRINGS = {
   "teacher.session.active": { id: "Sesi aktif - aktivitas sekarang: {{topic}} - {{tab}}.", en: "Session active - current activity: {{topic}} - {{tab}}." },
   "teacher.session.none": { id: "Belum ada sesi aktif.", en: "No active session yet." },
   "teacher.roster.count": { id: "{{total}} siswa tercatat - {{online}} online sekarang.", en: "{{total}} students recorded - {{online}} online now." },
-  "teacher.login.needcode": { id: "Isi kode kontrol guru dulu.", en: "Enter the teacher control code first." },
+  "teacher.login.needcode": { id: "Ketik kode guru dulu.", en: "Type your teacher code first." },
   "teacher.login.checking": { id: "Memeriksa...", en: "Checking..." },
   "teacher.session.starting": { id: "Memulai sesi...", en: "Starting session..." },
   "teacher.session.applying": { id: "Menerapkan...", en: "Applying..." },
@@ -373,7 +373,7 @@ const I18N_STRINGS = {
   "eksdata.empty": { id: "Isi minimal satu baris data dulu sebelum menyimpan.", en: "Fill in at least one row of data before saving." },
   "eksdata.saving": { id: "Menyimpan & memeriksa data...", en: "Saving & checking data..." },
   "eksdata.saved": { id: "Data tersimpan.", en: "Data saved." },
-  "eksdata.networkerror": { id: "Gagal terhubung ke server, periksa koneksi internetmu dan coba lagi.", en: "Couldn't connect to the server, check your internet connection and try again." },
+  "eksdata.networkerror": { id: "Gagal terhubung. Periksa koneksi internetmu lalu coba lagi.", en: "Couldn't connect. Check your internet connection and try again." },
   "toast.eksdata.required": { id: "Isi & simpan dulu tabel data pengamatan di atas sebelum melanjutkan.", en: "Fill in & save the observation data table above before continuing." },
 
   /* ---------------- Praktikum Virtual (varian "Simulasi Virtual" pada sub-tab Eksperimen) ---------------- */

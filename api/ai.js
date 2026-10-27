@@ -86,14 +86,14 @@ export default async function handler(req, res) {
   applyCors(req, res);
   if (req.method === "OPTIONS") { res.statusCode = 204; return res.end(); }
   if (req.method !== "POST") return sendJson(res, 405, { error: "POST only" });
-  if (!originAllowed(req)) return sendJson(res, 403, { error: "Origin not allowed." });
+  if (!originAllowed(req)) return sendJson(res, 403, { error: "Permintaan ditolak. / Request blocked." });
   let b;
-  try { b = await readJsonBody(req); } catch (e) { return sendJson(res, 400, { error: "Invalid JSON body." }); }
+  try { b = await readJsonBody(req); } catch (e) { return sendJson(res, 400, { error: "Permintaan tidak valid. Muat ulang halaman. / Invalid request." }); }
   const lang = b.lang === "en" ? "en" : "id";
   const en = lang === "en";
   const mode = str(b.mode, 20);
-  if (!["chat", "simulate", "edit", "continue"].includes(mode)) return sendJson(res, 400, { error: "Unknown mode" });
-  if (!aiConfigured()) return sendJson(res, 503, { error: en ? "The AI is not configured on the server yet (ANTHROPIC_API_KEY)." : "AI belum dikonfigurasi di server (ANTHROPIC_API_KEY)." });
+  if (!["chat", "simulate", "edit", "continue"].includes(mode)) return sendJson(res, 400, { error: "Permintaan tidak dikenal. / Unknown request." });
+  if (!aiConfigured()) return sendJson(res, 503, { error: en ? "The AI isn't available yet. Please tell your teacher." : "AI belum tersedia. Beri tahu gurumu." });
 
   b._ip = String(req.headers["x-real-ip"] || req.headers["x-forwarded-for"] || (req.socket && req.socket.remoteAddress) || "").split(",")[0].trim();
   let teacher = false;
@@ -104,7 +104,7 @@ export default async function handler(req, res) {
     ctx = teacher ? null : await resolveStudent(b);
   } catch (e) {
     if (e instanceof AccountError) return sendJson(res, e.status, { error: e.message, code: e.code });
-    return sendJson(res, 500, { error: String(e.message || e).slice(0, 200) });
+    return sendJson(res, 500, { error: (console.error("[ai]", e), en ? "Something went wrong. Please try again." : "Terjadi kendala. Silakan coba lagi.") });
   }
   if (!teacher && !ctx) return sendJson(res, 401, { error: en ? "Your login has ended. Sign in again with your name and PIN." : "Sesi login kamu sudah berakhir. Masuk lagi dengan nama dan PIN dari gurumu.", code: "AUTH" });
   // AI (Tutor Fisika & Makerspace) untuk siswa hanya saat belajar di kelas:
@@ -114,7 +114,7 @@ export default async function handler(req, res) {
   if (!teacher && !ctx.guest) {
     let st;
     try { st = await readSession(); }
-    catch (e) { return sendJson(res, 500, { error: String(e.message || e).slice(0, 200) }); }
+    catch (e) { return sendJson(res, 500, { error: (console.error("[ai]", e), en ? "Something went wrong. Please try again." : "Terjadi kendala. Silakan coba lagi.") }); }
     if (!codeMatches(st, str(b.sessionCode, 20))) {
       return sendJson(res, 403, { code: "CLASS_ONLY", error: en
         ? "The AI tutor and Makerspace are only available during a class session with your teacher."
@@ -129,7 +129,7 @@ export default async function handler(req, res) {
     try { await assertGroupWriter(ctx, topicId, "lab", str(b.deviceId, 80), en); }
     catch (e) {
       if (e instanceof AccountError) return sendJson(res, e.status, { error: e.message, code: e.code });
-      return sendJson(res, 500, { error: String(e.message || e).slice(0, 200) });
+      return sendJson(res, 500, { error: (console.error("[ai]", e), en ? "Something went wrong. Please try again." : "Terjadi kendala. Silakan coba lagi.") });
     }
   }
 
@@ -165,7 +165,7 @@ export default async function handler(req, res) {
     } else {
       const partial = String(b.partial || "").slice(0, 200000);
       const task = b.html ? editPrompt(String(b.html).slice(0, 160000), str(b.instruction, 2000), lang) : str(b.prompt, 8000);
-      if (!partial || !task) return sendJson(res, 400, { error: "Nothing to continue." });
+      if (!partial || !task) return sendJson(res, 400, { error: en ? "Nothing to continue." : "Tidak ada yang bisa dilanjutkan." });
       userContent = continuePrompt(task, partial, lang); quotaKind = "edit"; contPartial = partial;
     }
     body = {
@@ -182,7 +182,7 @@ export default async function handler(req, res) {
     quota = await takeQuota(quotaKind, sid);
   } catch (e) {
     if (e && e.code === "DATABASE_NOT_CONFIGURED") quota = { ok: true, release: async () => {} };
-    else return sendJson(res, 500, { error: String(e.message || e).slice(0, 200) });
+    else return sendJson(res, 500, { error: (console.error("[ai]", e), en ? "Something went wrong. Please try again." : "Terjadi kendala. Silakan coba lagi.") });
   }
   if (!quota.ok) {
     const msg = quota.reason === "student"

@@ -39,9 +39,9 @@
   <section class="teacher-login" id="teacher-login-card">
     <p class="eyebrow" data-i18n="teacher.login.eyebrow">Panel Guru</p>
     <h2 data-i18n="teacher.login.title">Masuk Panel Guru</h2>
-    <p class="muted small" data-i18n-html="teacher.login.desc2">Masukkan Kode Kontrol Guru, yaitu nilai <code>TEACHER_CONTROL_CODE</code> yang kamu atur di Environment Variables Vercel.</p>
-    <label><span data-i18n="teacher.controlcode.label">Kode Kontrol Guru</span>
-      <input type="password" id="teacher-control-input" data-i18n-placeholder="teacher.controlcode.placeholder" placeholder="Kode kontrol guru" autocomplete="current-password">
+    <p class="muted small" data-i18n="teacher.login.desc2">Masukkan kode guru Anda untuk membuka Panel Guru. Kode ini bersifat rahasia; jika lupa, hubungi pengelola Emergent di sekolah Anda.</p>
+    <label><span data-i18n="teacher.controlcode.label">Kode Guru</span>
+      <input type="password" id="teacher-control-input" data-i18n-placeholder="teacher.controlcode.placeholder" placeholder="Ketik kode guru" autocomplete="current-password">
     </label>
     <button type="button" id="teacher-login-btn" class="btn btn-primary" data-i18n="teacher.login.btn">Masuk</button>
     <p class="onboarding-status" id="teacher-login-status"></p>
@@ -273,7 +273,7 @@
     <section class="t-pane" id="pane-usage">
       <div class="t-card">
         <h3 data-i18n="teacher.usage.title">Pemakaian AI hari ini</h3>
-        <p class="t-card-desc" data-i18n="teacher.usage.desc">Jumlah permintaan AI dari seluruh siswa hari ini (reset tengah malam WIB). Batas bisa diubah lewat Environment Variables Vercel (lihat docs/SETUP.md).</p>
+        <p class="t-card-desc" data-i18n="teacher.usage.desc">Jumlah permintaan AI dari seluruh siswa hari ini (dihitung ulang setiap tengah malam WIB). Batas harian menjaga kuota AI sekolah tetap aman.</p>
         <div id="usage-body"></div>
       </div>
     </section>

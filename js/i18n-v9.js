@@ -4,7 +4,7 @@
    ============================================================ */
 Object.assign(I18N_STRINGS, {
   /* ---------- umum ---------- */
-  "api.network": { id: "Tidak dapat terhubung ke server. Periksa koneksi internet lalu coba lagi.", en: "Can't reach the server. Check your internet connection and try again." },
+  "api.network": { id: "Tidak dapat terhubung. Periksa koneksi internet lalu coba lagi.", en: "Can't connect. Check your internet connection and try again." },
   "tab.materi": { id: "Materi", en: "Lesson" },
   "header.brandsub2": { id: "AS & A Level Physics · 9702", en: "AS & A Level Physics · 9702" },
   "header.userchip.title": { id: "Akun & mode belajar", en: "Account & study mode" },
@@ -168,8 +168,8 @@ Object.assign(I18N_STRINGS, {
   "lkpd.date": { id: "Tanggal", en: "Date" },
   "lkpd.save.local": { id: "Tersimpan otomatis", en: "Saved automatically" },
   "lkpd.save.dirty": { id: "Menyimpan...", en: "Saving..." },
-  "lkpd.save.saved": { id: "Tersimpan ke server {{time}}", en: "Saved to server {{time}}" },
-  "lkpd.save.error": { id: "Belum tersimpan ke server (tersimpan di perangkat ini)", en: "Not yet saved to the server (kept on this device)" },
+  "lkpd.save.saved": { id: "Tersimpan {{time}}", en: "Saved {{time}}" },
+  "lkpd.save.error": { id: "Belum tersimpan online, tetapi aman di perangkat ini. Akan dicoba lagi otomatis.", en: "Not saved online yet, but kept safely on this device. It will retry automatically." },
   "lkpd.restored": { id: "Isian LKPD terbaru dari perangkat lain dimuat.", en: "Your latest worksheet from another device was loaded." },
   "lkpd.hint": { id: "Petunjuk", en: "Hint" },
   "lkpd.enrich": { id: "Pengayaan", en: "Extension" },
@@ -384,7 +384,7 @@ Object.assign(I18N_STRINGS, {
   "settings.unlock.desc2": { id: "Kode khusus dari guru untuk membuka semua tab tanpa urutan (mis. untuk validator atau eksplorasi).", en: "A special code from your teacher that opens every tab in any order (e.g. for reviewers or exploration)." },
   "settings.studentinfo.warn": { id: "Mengubah nama/kelas membuat identitas baru di Panel Guru. Lakukan hanya bila ada salah ketik.", en: "Changing your name/class creates a new identity in the Teacher Panel. Only do this to fix a typo." },
   "settings.resetonboarding2": { id: "Keluar & ulangi proses awal", en: "Sign out & start again" },
-  "settings.resetonboarding.confirm": { id: "Keluar dari perangkat ini? Progres yang sudah tersimpan di server tetap ada.", en: "Sign out on this device? Progress already saved on the server is kept." }
+  "settings.resetonboarding.confirm": { id: "Keluar dari perangkat ini? Progres yang sudah tersimpan tetap ada.", en: "Sign out on this device? Progress already saved is kept." }
 });
 
 /* ---------- Panel Guru ---------- */
@@ -392,7 +392,7 @@ Object.assign(I18N_STRINGS, {
   "teacher.brandsub": { id: "Panel Guru", en: "Teacher Panel" },
   "teacher.logout": { id: "Keluar", en: "Sign out" },
   "teacher.login.eyebrow": { id: "Panel Guru", en: "Teacher Panel" },
-  "teacher.login.desc2": { id: "Masukkan Kode Kontrol Guru, yaitu nilai <code>TEACHER_CONTROL_CODE</code> yang kamu atur di Environment Variables Vercel.", en: "Enter the Teacher Control Code, i.e. the <code>TEACHER_CONTROL_CODE</code> value you set in Vercel's Environment Variables." },
+  "teacher.login.desc2": { id: "Masukkan kode guru Anda untuk membuka Panel Guru. Kode ini bersifat rahasia; jika lupa, hubungi pengelola Emergent di sekolah Anda.", en: "Enter your teacher code to open the Teacher Panel. Keep it private; if you have forgotten it, contact the Emergent administrator at your school." },
   "teacher.tab.session": { id: "Sesi Kelas", en: "Class Session" },
   "teacher.tab.records": { id: "Rekap & Jawaban Siswa", en: "Records & Answers" },
   "teacher.tab.quiz": { id: "Kuis Topik", en: "Topic Quiz" },
@@ -469,11 +469,11 @@ Object.assign(I18N_STRINGS, {
   "teacher.student.pdf": { id: "Unduh PDF siswa ini", en: "Download this student's PDF" },
   "teacher.student.xlsx": { id: "Unduh Excel siswa ini", en: "Download this student's Excel" },
   "teacher.usage.title": { id: "Pemakaian AI hari ini", en: "AI usage today" },
-  "teacher.usage.desc": { id: "Jumlah permintaan AI dari seluruh siswa hari ini (reset tengah malam WIB). Batas bisa diubah lewat Environment Variables Vercel (lihat docs/SETUP.md).", en: "AI requests from all students today (resets at midnight WIB). Limits can be changed in Vercel's Environment Variables (see docs/SETUP.md)." },
-  "teacher.usage.models": { id: "Status AI server", en: "Server AI status" },
+  "teacher.usage.desc": { id: "Jumlah permintaan AI dari seluruh siswa hari ini (dihitung ulang setiap tengah malam WIB). Batas harian menjaga kuota AI sekolah tetap aman.", en: "AI requests from all students today (resets at midnight WIB). Daily limits keep the school's AI quota safe." },
+  "teacher.usage.models": { id: "Status layanan AI", en: "AI service status" },
   "chatbot.badge": { id: "Asisten AI", en: "AI assistant" },
-  "teacher.usage.aiok": { id: "API key terpasang", en: "API key set" },
-  "teacher.usage.aino": { id: "ANTHROPIC_API_KEY belum diatur", en: "ANTHROPIC_API_KEY not set" },
+  "teacher.usage.aiok": { id: "AI siap dipakai", en: "AI is ready" },
+  "teacher.usage.aino": { id: "AI belum aktif, hubungi pengelola situs", en: "AI is not active yet; contact the site administrator" },
   "teacher.usage.kind": { id: "Fitur", en: "Feature" },
   "teacher.usage.today": { id: "Hari ini", en: "Today" },
   "teacher.usage.limitglobal": { id: "Batas kelas/hari", en: "Class limit/day" },

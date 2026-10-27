@@ -7,9 +7,9 @@ export default async function handler(req, res) {
   applyCors(req, res);
   if (req.method === "OPTIONS") { res.statusCode = 204; return res.end(); }
   if (req.method !== "POST") return sendJson(res, 405, { error: "POST only" });
-  if (!originAllowed(req)) return sendJson(res, 403, { error: "Origin not allowed. Add it to ALLOWED_ORIGINS." });
+  if (!originAllowed(req)) return sendJson(res, 403, { error: "Permintaan ditolak. / Request blocked." });
   let body;
-  try { body = await readJsonBody(req); } catch (e) { return sendJson(res, 400, { error: "Invalid JSON body." }); }
+  try { body = await readJsonBody(req); } catch (e) { return sendJson(res, 400, { error: "Permintaan tidak valid. Muat ulang halaman. / Invalid request." }); }
   body = body && typeof body === "object" ? body : {};
   // Alamat IP hanya dipakai pembatas percobaan login (tidak disimpan sebagai data siswa)
   // Vercel mengisi x-real-ip / x-forwarded-for dengan IP klien yang sebenarnya.
@@ -20,11 +20,12 @@ export default async function handler(req, res) {
   } catch (e) {
     if (e instanceof HttpError) return sendJson(res, e.status || 400, e.code ? { error: e.message, code: e.code } : { error: e.message });
     if (e && e.code === "DATABASE_NOT_CONFIGURED") {
+      console.error("[backend] DATABASE_URL/POSTGRES_URL belum diatur di Vercel > Settings > Environment Variables");
       return sendJson(res, 503, { error: body && body.lang === "en"
-        ? "The database is not connected yet. Add DATABASE_URL (Supabase) in Vercel > Settings > Environment Variables, then redeploy."
-        : "Database belum terhubung. Tambahkan DATABASE_URL (Supabase) di Vercel > Settings > Environment Variables, lalu redeploy." });
+        ? "Emergent can't save data right now. Please tell your teacher or the site administrator."
+        : "Emergent belum bisa menyimpan data saat ini. Beri tahu guru atau pengelola situs." });
     }
     console.error("[backend]", body && body.mode, e);
-    return sendJson(res, 500, { error: (body && body.lang === "en" ? "Server error: " : "Terjadi kesalahan di server: ") + String(e && e.message || e).slice(0, 300) });
+    return sendJson(res, 500, { error: body && body.lang === "en" ? "Something went wrong. Please try again in a moment." : "Terjadi kendala. Coba lagi sebentar lagi." });
   }
 }
