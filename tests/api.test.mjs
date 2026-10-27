@@ -292,6 +292,21 @@ await test("foreign origin rejected, delete student removes account", async () =
   assert.equal(o.data.students.length, 2); assert.equal(o.data.accounts.length, 2);
 });
 
+await test("security: tokens are not derived from the teacher code; code guessing is throttled", async () => {
+  const crypto = await import("node:crypto");
+  const b64 = x => Buffer.from(x).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const body = b64(JSON.stringify({ k: "account", e: Date.now() + 1e9, n: "x", s: S1, v: 1 }));
+  const legacyKey = crypto.createHash("sha256").update("ps9:" + T).digest();
+  const forged = body + "." + b64(crypto.createHmac("sha256", legacyKey).update(body).digest());
+  assert.equal((await api({ mode: "student_me", token: forged })).status, 401, "token signed with the teacher code is rejected");
+  const ip = { "x-real-ip": "10.66.6.6" };
+  for (let i = 0; i < 20; i++) assert.equal((await api({ mode: "teacher_roster", controlCode: "tebak-" + i }, ip)).status, 401);
+  const blocked = await api({ mode: "teacher_roster", controlCode: T }, ip);
+  assert.equal(blocked.status, 429, "even the right code waits after 20 wrong guesses from one IP");
+  assert.equal((await api({ mode: "teacher_roster", controlCode: T }, { "x-real-ip": "10.7.7.7" })).status, 200, "other IPs unaffected");
+  for (let i = 0; i < 40; i++) await api({ mode: "verify_access", code: "SALAH" + i }, ip);
+  assert.equal((await api({ mode: "verify_access", code: "jelajah-uji" }, ip)).status, 429, "access-code guessing throttled");
+});
 console.log(`\n${passed} API tests passed`);
 child.kill();
 process.exit(0);

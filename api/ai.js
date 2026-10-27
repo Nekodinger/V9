@@ -12,8 +12,7 @@
    terkena batas waktu 60 detik seperti Apps Script di V7.
    ============================================================ */
 import { applyCors, originAllowed, readJsonBody, sendJson, sseStart, sseSend } from "../lib/http.js";
-import { isTeacher } from "../lib/auth.js";
-import { resolveStudent, workKey, assertGroupWriter, AccountError } from "../lib/accounts.js";
+import { resolveStudent, workKey, assertGroupWriter, AccountError, primeAuth, guardTeacherCode } from "../lib/accounts.js";
 import { aiConfigured, streamMessage, describeAiError, MODELS } from "../lib/anthropic.js";
 import { SIM_SYSTEM_PROMPT, buildChatSystemPrompt } from "../lib/prompts.js";
 import { takeQuota } from "../lib/usage.js";
@@ -96,10 +95,17 @@ export default async function handler(req, res) {
   if (!["chat", "simulate", "edit", "continue"].includes(mode)) return sendJson(res, 400, { error: "Unknown mode" });
   if (!aiConfigured()) return sendJson(res, 503, { error: en ? "The AI is not configured on the server yet (ANTHROPIC_API_KEY)." : "AI belum dikonfigurasi di server (ANTHROPIC_API_KEY)." });
 
-  const teacher = b.controlCode && isTeacher(b.controlCode);
+  b._ip = String(req.headers["x-real-ip"] || req.headers["x-forwarded-for"] || (req.socket && req.socket.remoteAddress) || "").split(",")[0].trim();
+  let teacher = false;
   let ctx = null;
-  try { ctx = teacher ? null : await resolveStudent(b); }
-  catch (e) { return sendJson(res, 500, { error: String(e.message || e).slice(0, 200) }); }
+  try {
+    await primeAuth();
+    teacher = await guardTeacherCode(b, en);
+    ctx = teacher ? null : await resolveStudent(b);
+  } catch (e) {
+    if (e instanceof AccountError) return sendJson(res, e.status, { error: e.message, code: e.code });
+    return sendJson(res, 500, { error: String(e.message || e).slice(0, 200) });
+  }
   if (!teacher && !ctx) return sendJson(res, 401, { error: en ? "Your login has ended. Sign in again with your name and PIN." : "Sesi login kamu sudah berakhir. Masuk lagi dengan nama dan PIN dari gurumu.", code: "AUTH" });
   // AI (Tutor Fisika & Makerspace) untuk siswa hanya saat belajar di kelas:
   // harus ada sesi kelas aktif dan siswa memakai kode sesi itu. Mode mandiri

@@ -47,6 +47,7 @@ async function newPage(viewport) {
     return /googleapis|gstatic|jsdelivr/.test(u) ? r.abort() : r.continue();
   });
   pg.on("pageerror", e => pageErrors.push(String(e)));
+  pg.on("console", m => { if (/Content Security Policy|Refused to (load|execute|apply|frame|connect)/i.test(m.text())) pageErrors.push("CSP: " + m.text()); });
   return pg;
 }
 async function step(name, fn) {
@@ -353,6 +354,8 @@ await step("Class session: join, quiz, session end keeps student inside (V7 bug 
   const s = await api({ mode: "teacher_session", controlCode: "guru-uji", action: "start", topicId: "magnetic-fields", tabIndex: 0 });
   await api({ mode: "quiz_bank_save", controlCode: "guru-uji", topicId: "magnetic-fields", questions: [{ type: "mcq", question: "Satuan B adalah", options: ["T", "N", "A", "Wb"], correct: 0 }, { type: "short", question: "Definisikan tesla." }] });
   const bank = await api({ mode: "quiz_bank_get", controlCode: "guru-uji", topicId: "magnetic-fields" });
+  await pg.click("#menu-btn");
+  await pg.waitForSelector("#menu-drawer.open");
   await pg.click("#settings-btn");
   await pg.fill("#class-session-code-input", s.state.code);
   await pg.click("#class-session-join-btn");
@@ -461,6 +464,38 @@ await step("Teacher panel: records, detail with LKPD answers, Excel & PDF export
   await tp.waitForSelector("#usage-body table");
   await tp.screenshot({ path: path.join(SHOTS, "11-teacher-usage.png") });
 });
+await step("Security: student-supplied text is never executed in the Teacher Panel (XSS)", async () => {
+  const X = n => `<img src=x onerror=window.__xss=${n}><script>window.__xss=${n}</script>`;
+  const add = await api({ mode: "teacher_accounts_add", controlCode: "guru-uji", lines: [{ name: "Eve " + X(1), className: "XSS " + X(2), group: "G " + X(3) }] });
+  assert.equal(add.created.length, 1);
+  const ev = add.created[0];
+  const tok = (await api({ mode: "student_login", name: ev.name, pin: ev.pin })).token;
+  assert.ok(tok, "payload-named student can log in");
+  for (const kind of ["latihan", "lab_prompt", "lab_reflection", "materi_check"]) await api({ mode: "record_event", token: tok, topicId: "magnetic-fields", kind, item: X(4), payload: { answer: X(5), text: X(6), prompt: X(7) }, score: 0 });
+  await api({ mode: "lkpd_save", token: tok, topicId: "magnetic-fields", lkpdMode: "virtual", data: { open: { conclusion: X(8) }, a: { calcB: X(9) }, group: X(10) }, progress: 50, submit: true });
+  const tp = await newPage({ width: 1400, height: 900 });
+  await tp.goto(BASE + "/teacher.html");
+  await tp.fill("#teacher-control-input", "guru-uji");
+  await tp.click("#teacher-login-btn");
+  await tp.waitForSelector("#teacher-panel:not([hidden])");
+  await tp.click('.t-tab[data-pane="accounts"]'); await tp.waitForSelector(".acc-group");
+  await tp.check("#acc-show-pin");
+  await tp.click('.t-tab[data-pane="records"]'); await tp.waitForSelector("#records-body .student-link");
+  await tp.click('#records-body .student-link:has-text("Eve")');
+  await tp.waitForSelector("#student-modal-body .detail-section");
+  await tp.waitForTimeout(500);
+  const r = await tp.evaluate(() => ({ xss: window.__xss, imgs: document.querySelectorAll('img[src="x"]').length, scripts: [...document.querySelectorAll("script")].filter(s => /__xss/.test(s.textContent)).length }));
+  assert.deepEqual(r, { xss: undefined, imgs: 0, scripts: 0 }, "payload rendered as text only");
+  assert.match(await tp.textContent("#student-modal-body"), /onerror=window.__xss=4/, "payload is visible as plain text");
+  await tp.context().close();
+  // tampilan siswa juga aman (nama & kelompok di menu)
+  const sp = await newPage();
+  await loginStudent(sp, ev.name, ev.pin, "self");
+  await sp.waitForSelector("#site-shell:not([hidden])");
+  await sp.waitForTimeout(400);
+  assert.equal(await sp.evaluate(() => window.__xss), undefined);
+  await sp.context().close();
+});
 await step("English UI and phone layout", async () => {
   const mp = await newPage({ width: 390, height: 844 });
   await mp.goto(BASE + "/");
@@ -470,6 +505,41 @@ await step("English UI and phone layout", async () => {
   const overflow = await mp.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   assert.ok(!overflow, "no horizontal scroll on phone gate");
   await mp.screenshot({ path: path.join(SHOTS, "12-phone-gate.png"), fullPage: true });
+});
+await step("Transparent header + burger menu: nothing overlaps, keyboard friendly", async () => {
+  for (const vp of [{ width: 1360, height: 900 }, { width: 820, height: 1180 }, { width: 390, height: 844 }]) {
+    const hp = await newPage(vp);
+    await loginStudent(hp, "Rina Putri", PIN["Rina Putri"], "self");
+    await hp.waitForSelector("#site-shell:not([hidden])");
+    await hp.evaluate(() => window.scrollTo(0, 0)); await hp.waitForTimeout(400);
+    const bg = await hp.evaluate(() => [window.scrollY, getComputedStyle(document.getElementById("site-header")).backgroundColor].join(" "));
+    assert.match(bg, /rgba\(0, 0, 0, 0\)|transparent/, "header is transparent at the top: " + bg);
+    // tombol menu & logo tidak saling menutupi, tidak ada scroll horizontal
+    const boxes = await hp.evaluate(() => ["#brand-home", "#menu-btn", "#header-mode"].map(q => { const r = document.querySelector(q).getBoundingClientRect(); return { q, l: r.left, r: r.right, t: r.top, b: r.bottom, w: r.width }; }));
+    const vis = boxes.filter(b => b.w > 0);
+    for (let i = 0; i < vis.length; i++) for (let j = i + 1; j < vis.length; j++) {
+      const a = vis[i], b = vis[j];
+      assert.ok(a.r <= b.l + 0.5 || b.r <= a.l + 0.5 || a.b <= b.t || b.b <= a.t, `${a.q} overlaps ${b.q} at ${vp.width}px`);
+    }
+    assert.ok(!(await hp.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)), "no horizontal scroll at " + vp.width);
+    await hp.click("#welcome-start-btn");
+    await hp.waitForSelector(".deck-slide");
+    const top = await hp.evaluate(() => document.getElementById("topic-badge").getBoundingClientRect().top - document.getElementById("site-header").getBoundingClientRect().bottom);
+    assert.ok(top >= 0, "topic title is not hidden under the header (" + top + ")");
+    await hp.click("#menu-btn");
+    await hp.waitForSelector("#menu-drawer.open");
+    assert.equal(await hp.getAttribute("#menu-btn", "aria-expanded"), "true");
+    assert.ok(await hp.isVisible('#topic-nav .nav-item[data-id="magnetic-fields"]'));
+    if (vp.width === 390) await hp.screenshot({ path: path.join(SHOTS, "20-phone-menu.png") });
+    await hp.keyboard.press("Escape");
+    await hp.waitForSelector("#menu-drawer", { state: "hidden" });
+    await hp.click("#menu-btn");
+    await hp.waitForSelector("#menu-drawer.open");
+    await hp.click("#settings-btn");
+    await hp.waitForSelector("#settings-modal:not([hidden])");
+    await hp.waitForSelector("#menu-drawer", { state: "hidden", timeout: 2000 }); // menu menutup, modal tidak tertimpa
+    await hp.context().close();
+  }
 });
 await step("Validator: explore code via gate link", async () => {
   const vp = await newPage();

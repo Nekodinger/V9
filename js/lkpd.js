@@ -248,7 +248,7 @@ window.LKPD = (function () {
     if (!ph) return `<span class="muted small">-</span>`;
     const url = ph.url || (LKPD_PHOTO_BASE + ph.src);
     const page = "https://commons.wikimedia.org/wiki/File:" + encodeURIComponent(ph.file);
-    return `<a href="${esc(page)}" target="_blank" rel="noopener noreferrer" class="lkpd-mat-photo"><img src="${esc(url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.closest('.lkpd-mat-photo').classList.add('noimg')"></a>`;
+    return `<a href="${esc(page)}" target="_blank" rel="noopener noreferrer" class="lkpd-mat-photo"><img src="${esc(url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></a>`;
   }
   function materialsTableHTML(sec, idx) {
     const st = ctx.st;
@@ -351,6 +351,8 @@ window.LKPD = (function () {
         </footer>
       </article>`;
     ctx.root = container.querySelector(".lkpd");
+    // foto alat gagal dimuat (offline / diblokir) -> tampilkan keterangan, tanpa handler inline
+    ctx.root.addEventListener("error", e => { const a = e.target.closest && e.target.closest(".lkpd-mat-photo"); if (a) a.classList.add("noimg"); }, true);
     wire();
     recalcTable();
     drawGraph();

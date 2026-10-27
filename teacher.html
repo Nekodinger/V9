@@ -8,19 +8,17 @@
 <meta name="theme-color" content="#525FE1">
 <link rel="icon" type="image/png" href="assets/favicon-64.png">
 <link rel="apple-touch-icon" href="assets/logo-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<link rel="preload" href="assets/fonts/space-grotesk-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/style.css">
-<script>
-  window.MathJax = { tex: { inlineMath: [["$", "$"], ["\\(", "\\)"]] }, svg: { fontCache: "global" } };
-</script>
+<script src="js/mathjax-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" id="MathJax-script" async></script>
 </head>
 <body class="teacher-shell">
-<header class="site-header">
+<header class="site-header" id="site-header">
   <div class="header-inner">
-    <a href="index.html" class="brand" style="text-decoration:none">
+    <a href="index.html" class="brand">
       <img class="brand-mark" src="assets/logo-96.png" alt="Logo Emergent" width="44" height="44">
       <span class="brand-text">
         <span class="brand-title">Emergent</span>
@@ -32,7 +30,7 @@
         <button type="button" class="lang-switch-btn" data-lang="id">ID</button>
         <button type="button" class="lang-switch-btn" data-lang="en">EN</button>
       </div>
-      <button type="button" id="teacher-logout-btn" class="settings-btn" hidden data-i18n="teacher.logout">Keluar</button>
+      <button type="button" id="teacher-logout-btn" class="menu-btn" hidden data-i18n="teacher.logout">Keluar</button>
     </div>
   </div>
 </header>

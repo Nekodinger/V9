@@ -12,7 +12,8 @@ export default async function handler(req, res) {
   try { body = await readJsonBody(req); } catch (e) { return sendJson(res, 400, { error: "Invalid JSON body." }); }
   body = body && typeof body === "object" ? body : {};
   // Alamat IP hanya dipakai pembatas percobaan login (tidak disimpan sebagai data siswa)
-  body._ip = String(req.headers["x-forwarded-for"] || (req.socket && req.socket.remoteAddress) || "").split(",")[0].trim();
+  // Vercel mengisi x-real-ip / x-forwarded-for dengan IP klien yang sebenarnya.
+  body._ip = String(req.headers["x-real-ip"] || req.headers["x-forwarded-for"] || (req.socket && req.socket.remoteAddress) || "").split(",")[0].trim();
   try {
     const out = await dispatch(body);
     return sendJson(res, 200, out);

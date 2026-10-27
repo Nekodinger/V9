@@ -92,7 +92,7 @@ function mediaRow(image, video) {
   const vidPart = video ? `
     <div class="media-card">
       <div class="media-video-wrap">
-        <iframe src="https://www.youtube.com/embed/${video.id}" title="${video.title}" allowfullscreen loading="lazy"></iframe>
+        <iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(video.id)}" title="${video.title}" allowfullscreen loading="lazy"></iframe>
       </div>
       <p class="media-caption"><strong>${video.title}</strong> &middot; ${video.channel}<br>${video.desc}</p>
     </div>` : "";

@@ -96,7 +96,9 @@ const mock = http.createServer((req, res) => {
 });
 
 /* ---------- Static + API ---------- */
-const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".json": "application/json", ".jpg": "image/jpeg", ".woff2": "font/woff2" };
+const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".json": "application/json", ".jpg": "image/jpeg", ".woff2": "font/woff2", ".webp": "image/webp", ".txt": "text/plain; charset=utf-8" };
+// Header keamanan sama dengan produksi (vercel.json), supaya tes ikut menguji CSP.
+const PROD_HEADERS = (() => { try { const v = JSON.parse(fs.readFileSync(path.join(ROOT, "vercel.json"), "utf8")); const h = {}; (v.headers || []).filter(x => x.source === "/(.*)").forEach(x => x.headers.forEach(k => { if (k.key !== "Strict-Transport-Security") h[k.key] = String(k.value).replace("; upgrade-insecure-requests", ""); })); return h; } catch (e) { return {}; } })();
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://x");
   if (url.pathname === "/api/backend") return backend(req, res);
@@ -118,7 +120,7 @@ const server = http.createServer(async (req, res) => {
   if (!file.startsWith(ROOT) || /node_modules|\.\.|\/lib\/|\/tests\//.test(p)) { res.writeHead(404); return res.end("not found"); }
   fs.readFile(file, (err, data) => {
     if (err) { res.writeHead(404); return res.end("not found"); }
-    res.writeHead(200, { "content-type": TYPES[path.extname(file)] || "application/octet-stream" });
+    res.writeHead(200, { ...PROD_HEADERS, "content-type": TYPES[path.extname(file)] || "application/octet-stream" });
     res.end(data);
   });
 });

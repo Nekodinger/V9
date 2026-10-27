@@ -926,7 +926,74 @@ function refreshUserChip() {
   let kind = role === "guest" ? "explore" : (isInClassSession() ? "class" : (getAccessKind() === "explore" ? "explore" : "self"));
   modeEl.className = "chip-mode " + kind;
   modeEl.textContent = kind === "class" ? t("header.chip.class", { code: classSession.code }) : t("header.chip." + kind);
+  // Menu geser: avatar inisial, kelas & kelompok; label mode kecil di header
+  const nm = role === "student" ? getStudentName() : t("header.chip.guest");
+  nameEl.textContent = nm;
+  const av = document.getElementById("user-chip-avatar");
+  if (av) av.textContent = (nm || "?").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
+  const sub = document.getElementById("user-chip-sub");
+  if (sub) {
+    const acc = (typeof getAccount === "function") ? getAccount() : null;
+    sub.textContent = role === "student"
+      ? [getStudentClass(), acc && acc.groupName ? acc.groupName + (acc.isLeader ? " · " + t("teacher.rec.leader") : "") : ""].filter(Boolean).join(" · ")
+      : t("header.chip.explore");
+  }
+  const hm = document.getElementById("header-mode");
+  if (hm) { hm.className = "header-mode " + kind; hm.textContent = modeEl.textContent; }
 }
+
+/* ---------------- Menu geser (burger) ---------------- */
+const menuDrawer = document.getElementById("menu-drawer");
+const drawerBackdrop = document.getElementById("drawer-backdrop");
+const menuBtn = document.getElementById("menu-btn");
+let drawerReturnFocus = null;
+function openMenu() {
+  drawerReturnFocus = document.activeElement;
+  menuDrawer.hidden = false; drawerBackdrop.hidden = false;
+  requestAnimationFrame(() => { menuDrawer.classList.add("open"); drawerBackdrop.classList.add("open"); });
+  document.body.classList.add("drawer-open");
+  menuBtn.setAttribute("aria-expanded", "true");
+  const first = menuDrawer.querySelector(".nav-item.active") || document.getElementById("menu-close-btn");
+  setTimeout(() => first && first.focus({ preventScroll: true }), 60);
+}
+function closeMenu() {
+  if (menuDrawer.hidden) return;
+  menuDrawer.classList.remove("open"); drawerBackdrop.classList.remove("open");
+  document.body.classList.remove("drawer-open");
+  menuBtn.setAttribute("aria-expanded", "false");
+  setTimeout(() => { if (!menuDrawer.classList.contains("open")) { menuDrawer.hidden = true; drawerBackdrop.hidden = true; } }, 260);
+  if (drawerReturnFocus && drawerReturnFocus.focus) drawerReturnFocus.focus({ preventScroll: true });
+}
+menuBtn.addEventListener("click", () => (menuDrawer.hidden ? openMenu() : closeMenu()));
+document.getElementById("menu-close-btn").addEventListener("click", closeMenu);
+drawerBackdrop.addEventListener("click", closeMenu);
+document.addEventListener("keydown", e => {
+  if (menuDrawer.hidden) return;
+  if (e.key === "Escape") { e.preventDefault(); closeMenu(); return; }
+  if (e.key === "Tab") { // fokus tetap di dalam menu
+    const f = [...menuDrawer.querySelectorAll("button:not([disabled]), a[href]")].filter(x => x.offsetParent !== null);
+    if (!f.length) return;
+    if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+  }
+});
+// Item yang membuka sesuatu menutup menu dulu supaya tidak saling menutupi
+menuDrawer.addEventListener("click", e => {
+  if (e.target.closest(".nav-item, #settings-btn, #user-chip, #menu-chat-btn, #menu-home-btn")) closeMenu();
+});
+document.getElementById("menu-home-btn").addEventListener("click", () => document.getElementById("brand-home").click());
+document.getElementById("menu-chat-btn").addEventListener("click", () => {
+  document.getElementById("chatbot-panel").hidden = false;
+  if (window.Chatbot) Chatbot.onOpen();
+});
+document.getElementById("menu-logout-btn").addEventListener("click", () => {
+  closeMenu();
+  document.getElementById("settings-reset-onboarding-btn").click();
+});
+// Header transparan di atas, kaca buram tipis setelah halaman digulir
+function syncHeaderScrolled() { document.getElementById("site-header").classList.toggle("scrolled", window.scrollY > 8); }
+window.addEventListener("scroll", syncHeaderScrolled, { passive: true });
+syncHeaderScrolled();
 
 /* ---------------- Header height (untuk offset sticky) ---------------- */
 function syncHeaderHeight() {
@@ -936,6 +1003,8 @@ function syncHeaderHeight() {
   }
 }
 window.addEventListener("resize", syncHeaderHeight);
+// Header fixed: tinggi berubah saat banner sesi kelas muncul -> konten ikut turun, tidak tertutup
+if (typeof ResizeObserver === "function") new ResizeObserver(syncHeaderHeight).observe(document.querySelector(".site-header"));
 
 
 /* ---------------- Navigasi Topik ---------------- */
@@ -1030,42 +1099,11 @@ document.getElementById("brand-home").addEventListener("click", () => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 });
 
-/* ---------------- Sidebar auto-hide ---------------- */
-const topicNavEl = document.getElementById("topic-nav");
-const navToggleBtn = document.getElementById("nav-toggle");
-let navPeekTimer = null;
-
-function collapseSidebar() {
-  document.body.classList.add("nav-collapsed");
-  document.body.classList.remove("nav-pinned", "nav-peek");
-}
-function expandSidebar() {
-  document.body.classList.remove("nav-collapsed", "nav-peek", "nav-pinned");
-}
-navToggleBtn.addEventListener("click", () => {
-  const pinned = document.body.classList.toggle("nav-pinned");
-  if (pinned) document.body.classList.remove("nav-peek");
-});
-
-// Menu topik sepenuhnya tersembunyi begitu sebuah topik aktif (hanya tombol
-// bulat #nav-toggle yang terlihat). Meng-hover tombol ATAU panel nav itu
-// sendiri memunculkannya sementara sebagai overlay ("nav-peek"); menjauhkan
-// mouse dari keduanya (dengan jeda singkat supaya tidak berkedip saat
-// berpindah dari tombol ke panel) menyembunyikannya lagi.
-function peekSidebar() {
-  clearTimeout(navPeekTimer);
-  document.body.classList.add("nav-peek");
-}
-function scheduleHideSidebarPeek() {
-  clearTimeout(navPeekTimer);
-  navPeekTimer = setTimeout(() => document.body.classList.remove("nav-peek"), 180);
-}
-[navToggleBtn, topicNavEl].forEach(el => {
-  el.addEventListener("mouseenter", peekSidebar);
-  el.addEventListener("mouseleave", scheduleHideSidebarPeek);
-  el.addEventListener("focusin", peekSidebar);
-  el.addEventListener("focusout", scheduleHideSidebarPeek);
-});
+/* ---------------- Menu topik ----------------
+   V9: daftar topik pindah ke menu geser (burger), jadi tidak ada lagi
+   sidebar yang bisa menutupi konten. Fungsi lama dibiarkan sebagai no-op. */
+function collapseSidebar() { /* no-op */ }
+function expandSidebar() { /* no-op */ }
 
 /* ---------------- Tabs ---------------- */
 // Kalau sebuah tab terkunci karena SESI KELAS aktif (guru menentukan aktivitas

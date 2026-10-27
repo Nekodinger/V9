@@ -725,3 +725,16 @@ document.getElementById("quiz-results-close-x").addEventListener("click", closeQ
 applyStaticI18n();
 initLangSwitch();
 if (getControlCode()) doLogin(getControlCode());
+
+/* Header transparan (fixed): kaca buram tipis setelah digulir; tinggi header dipakai sebagai offset konten. */
+(function () {
+  const h = document.getElementById("site-header");
+  if (!h) return;
+  const sync = () => {
+    h.classList.toggle("scrolled", window.scrollY > 8);
+    document.documentElement.style.setProperty("--header-h", h.offsetHeight + "px");
+  };
+  window.addEventListener("scroll", sync, { passive: true });
+  window.addEventListener("resize", sync);
+  sync();
+})();
